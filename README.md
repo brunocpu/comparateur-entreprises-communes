@@ -1,4 +1,4 @@
-# Comparateur d'entreprises — communes françaises
+# Démographie des entreprises entre communes comparables
 
 Application web statique qui compare les **~34 000 communes françaises** selon leur démographie d'entreprises (stocks d'unités légales, créations annuelles, profil sectoriel) à partir des données ouvertes Insee.
 
