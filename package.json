@@ -4,6 +4,12 @@
   "private": true,
   "type": "module",
   "description": "Tells Node to treat js/*.js as ES modules. The browser app does not read this file.",
+  "scripts": {
+    "test": "node --test test/units.mjs",
+    "test:e2e": "node test-pull.mjs",
+    "build:data": "node scripts/build-data.mjs",
+    "build:og": "node scripts/build-og-image.mjs"
+  },
   "devDependencies": {
     "@fontsource/fraunces": "^5.2.9",
     "@fontsource/geist-mono": "^5.2.7",

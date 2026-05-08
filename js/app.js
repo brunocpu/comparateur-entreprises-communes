@@ -4,6 +4,7 @@ import { findComparables, summarizeComparables, countInRadius } from './matching
 import * as ui from './ui.js';
 import { exportCsv } from './export.js';
 import { fmtDate } from './format.js';
+import { normalize } from './util.js';
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -322,13 +323,6 @@ function removeMultiCommune(code) {
 }
 
 // ---------- search & autocomplete ----------
-
-function normalize(s) {
-  return s.toLowerCase()
-    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
-    .replace(/[^a-z0-9]/g, ' ')
-    .trim();
-}
 
 function searchCommunes(q) {
   const nq = normalize(q);

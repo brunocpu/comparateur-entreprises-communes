@@ -1,5 +1,6 @@
 import { A10_SECTORS, SECTOR_LABELS, SECTOR_DETAILS } from './insee-api.js';
 import { fmtInt, fmtDec1, fmtPct, fmtPctSigned } from './format.js';
+import { escapeHtml } from './util.js';
 
 // Respect du paramètre système « réduire les animations » (RGAA 13.x).
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -126,12 +127,6 @@ export function setupAutocomplete(input, listEl, getItems, onPick) {
   });
 
   input.addEventListener('blur', () => setTimeout(close, 120));
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-  ));
 }
 
 // ---------- target card ----------

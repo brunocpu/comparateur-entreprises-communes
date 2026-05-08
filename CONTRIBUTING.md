@@ -22,11 +22,24 @@ Premier chargement : si `data/communes-2023.json` est présent dans le dépôt, 
 
 ## Tests
 
+Deux niveaux :
+
 ```bash
-node test-pull.mjs
+# Unitaires offline — pas de réseau, ~100 ms, à lancer à chaque modif d'un helper.
+npm test
+
+# Bout-en-bout réseau — pull complet API Insee + matching, ~35 s.
+npm run test:e2e
 ```
 
-Lance le pipeline complet et vérifie l'extraction des ~34 000 communes (Romans-sur-Isère 26281 testée bout-en-bout), les filtres méthodologiques, le matching aux quatre modes de zone.
+Les unitaires couvrent les helpers pures : `quantile`, `cosine`, `haversine`,
+`relDelta`, `summarizeComparables`, `findComparables`, `parseCsvLine`,
+`headerIndex`, `normalize`, `escapeHtml`, `fmtInt`/`fmtDec1`/`fmtPct`. Voir
+`test/units.mjs`.
+
+Le harness e2e (`test-pull.mjs`) vérifie l'extraction réelle depuis l'API
+Insee, à utiliser quand on touche à la pipeline réseau (`insee-api.js`,
+`zip-csv.js`).
 
 ## Conventions
 

@@ -154,7 +154,7 @@ export function summarizeComparables(target, comparables) {
   return { summary, delta, ulGapToMedian };
 }
 
-function relDelta(target, ref) {
+export function relDelta(target, ref) {
   if (target == null || ref == null || ref === 0) return null;
   return (target - ref) / ref;
 }
@@ -169,7 +169,7 @@ function medianVector(vectors) {
   return out;
 }
 
-function cosine(a, b) {
+export function cosine(a, b) {
   let dot = 0, na = 0, nb = 0;
   for (let i = 0; i < a.length; i++) {
     dot += a[i] * b[i];
@@ -180,7 +180,7 @@ function cosine(a, b) {
   return dot / (Math.sqrt(na) * Math.sqrt(nb));
 }
 
-function haversine(lat1, lon1, lat2, lon2) {
+export function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const toRad = d => d * Math.PI / 180;
   const dLat = toRad(lat2 - lat1);
