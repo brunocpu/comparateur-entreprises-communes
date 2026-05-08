@@ -1,7 +1,7 @@
 // Service worker — caches the app shell for offline use.
 // Insee data lives in IndexedDB and is not handled here.
 
-const CACHE = 'cec-shell-v66';
+const CACHE = 'cec-shell-v67';
 const SHELL = [
   './',
   './index.html',
