@@ -1,0 +1,7 @@
+{
+  "name": "comparateur-entreprises-communes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tells Node to treat js/*.js as ES modules. The browser app does not read this file."
+}
