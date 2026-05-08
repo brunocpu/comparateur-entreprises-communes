@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- Fond papier + filet inférieur subtil -->
+  <rect width="1200" height="630" fill="#f5f1ea"/>
+  <line x1="0" y1="629" x2="1200" y2="629" stroke="#d9d3c4" stroke-width="2"/>
+
+  <!-- ===== Colonne gauche : titre éditorial ===== -->
+  <!-- Eyebrow mono uppercase, lettrage espacé -->
+  <text x="80" y="100" font-family="GeistMono" font-size="20" fill="#6e6962" letter-spacing="3.5">
+    COMPARATEUR · DONNÉES INSEE · 2026
+  </text>
+
+  <!-- H1 trois lignes, Fraunces 88pt, chute en italique rouille -->
+  <text x="80" y="220" font-family="Fraunces" font-weight="500" font-size="88" fill="#1c1a16" letter-spacing="-1.6">
+    Une commune,
+  </text>
+  <text x="80" y="320" font-family="Fraunces" font-weight="500" font-size="88" fill="#1c1a16" letter-spacing="-1.6">
+    dix comparables,
+  </text>
+  <text x="80" y="420" font-family="Fraunces" font-style="italic" font-weight="400" font-size="88" fill="#c2570e" letter-spacing="-1.6">
+    quatre repères.
+  </text>
+
+  <!-- Filet horizontal entre titre et sous-titre, façon Datawrapper -->
+  <line x1="80" y1="475" x2="200" y2="475" stroke="#1c1a16" stroke-width="2"/>
+
+  <!-- Sous-titre Geist, deux lignes -->
+  <text x="80" y="528" font-family="Geist" font-weight="400" font-size="22" fill="#6b6660">
+    Pour chaque commune française, dix communes
+  </text>
+  <text x="80" y="560" font-family="Geist" font-weight="400" font-size="22" fill="#6b6660">
+    de taille et de profil économique proches. Données Insee Side.
+  </text>
+
+  <!-- ===== Colonne droite : encart « indicateur + bullet chart » ===== -->
+  <g transform="translate(770, 80)">
+    <!-- Card surface beige clair, filet papier -->
+    <rect x="0" y="0" width="360" height="470" fill="#fffefb" stroke="#d9d3c4" stroke-width="1" rx="6"/>
+
+    <!-- Header card : commune cible -->
+    <text x="24" y="44" font-family="GeistMono" font-size="11" fill="#6e6962" letter-spacing="2.2">
+      CIBLE · DRÔME
+    </text>
+    <text x="24" y="80" font-family="Fraunces" font-weight="500" font-size="28" fill="#1c1a16" letter-spacing="-0.6">
+      Romans-sur-Isère
+    </text>
+    <line x1="24" y1="100" x2="336" y2="100" stroke="#d9d3c4"/>
+
+    <!-- Indicateur cardinal -->
+    <text x="24" y="130" font-family="GeistMono" font-size="11" fill="#6e6962" letter-spacing="2.2">
+      ENTREPRISES ACTIVES
+    </text>
+    <text x="24" y="180" font-family="Fraunces" font-weight="400" font-size="56" fill="#1c1a16" letter-spacing="-1.4">
+      4 217
+    </text>
+
+    <!-- Bullet chart : Q1—Q3 ribbon + médiane + cible -->
+    <g transform="translate(24, 210)">
+      <line x1="0" y1="14" x2="312" y2="14" stroke="#d9d3c4" stroke-width="1"/>
+      <rect x="78" y="6" width="160" height="16" fill="#ebe6da"/>
+      <line x1="158" y1="2" x2="158" y2="26" stroke="#6e6962" stroke-width="1.5"/>
+      <circle cx="118" cy="14" r="9" fill="#1c3d5a" stroke="#fffefb" stroke-width="3"/>
+    </g>
+    <text x="24" y="262" font-family="GeistMono" font-size="11" fill="#6e6962" letter-spacing="0.5">
+      Q1 3 580 · médiane 4 720 · Q3 5 240
+    </text>
+
+    <line x1="24" y1="284" x2="336" y2="284" stroke="#d9d3c4"/>
+
+    <!-- Profil sectoriel : 3 secteurs représentatifs -->
+    <text x="24" y="312" font-family="GeistMono" font-size="11" fill="#6e6962" letter-spacing="2.2">
+      RÉPARTITION SECTORIELLE
+    </text>
+
+    <!-- Industrie -->
+    <text x="24" y="342" font-family="Geist" font-size="14" fill="#1c1a16">Industrie</text>
+    <text x="336" y="342" font-family="GeistMono" font-size="12" fill="#6e6962" text-anchor="end">14,2 %</text>
+    <rect x="24" y="350" width="312" height="6" fill="#ebe6da"/>
+    <rect x="24" y="350" width="74" height="6" fill="#1c3d5a"/>
+    <line x1="118" y1="346" x2="118" y2="360" stroke="#c2570e" stroke-width="2"/>
+    <circle cx="118" cy="346" r="4" fill="#c2570e"/>
+
+    <!-- Commerce / transports / hébergement -->
+    <text x="24" y="385" font-family="Geist" font-size="14" fill="#1c1a16">Commerce, transports</text>
+    <text x="336" y="385" font-family="GeistMono" font-size="12" fill="#6e6962" text-anchor="end">28,7 %</text>
+    <rect x="24" y="393" width="312" height="6" fill="#ebe6da"/>
+    <rect x="24" y="393" width="184" height="6" fill="#1c3d5a"/>
+    <line x1="170" y1="389" x2="170" y2="403" stroke="#c2570e" stroke-width="2"/>
+    <circle cx="170" cy="389" r="4" fill="#c2570e"/>
+
+    <!-- Services scientifiques -->
+    <text x="24" y="428" font-family="Geist" font-size="14" fill="#1c1a16">Services scientifiques</text>
+    <text x="336" y="428" font-family="GeistMono" font-size="12" fill="#6e6962" text-anchor="end">11,4 %</text>
+    <rect x="24" y="436" width="312" height="6" fill="#ebe6da"/>
+    <rect x="24" y="436" width="58" height="6" fill="#1c3d5a"/>
+    <line x1="84" y1="432" x2="84" y2="446" stroke="#c2570e" stroke-width="2"/>
+    <circle cx="84" cy="432" r="4" fill="#c2570e"/>
+  </g>
+</svg>

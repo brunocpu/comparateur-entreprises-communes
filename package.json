@@ -1,7 +1,14 @@
 {
   "name": "comparateur-entreprises-communes",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Tells Node to treat js/*.js as ES modules. The browser app does not read this file."
+  "description": "Tells Node to treat js/*.js as ES modules. The browser app does not read this file.",
+  "devDependencies": {
+    "@fontsource/fraunces": "^5.2.9",
+    "@fontsource/geist-mono": "^5.2.7",
+    "@fontsource/geist-sans": "^5.2.5",
+    "@resvg/resvg-js": "^2.6.2",
+    "wawoff2": "^2.0.1"
+  }
 }
