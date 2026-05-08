@@ -93,7 +93,7 @@ export function exportCsv(target, comparables, summary, scope) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const safeName = target.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-');
+  const safeName = target.name.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-zA-Z0-9]+/g, '-');
   a.download = `comparateur-${target.code}-${safeName}.csv`;
   document.body.appendChild(a);
   a.click();

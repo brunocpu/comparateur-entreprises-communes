@@ -338,7 +338,7 @@ function removeMultiCommune(code) {
 
 function normalize(s) {
   return s.toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
     .replace(/[^a-z0-9]/g, ' ')
     .trim();
 }
