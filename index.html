@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b3d91">
+  <title>Comparateur d'entreprises — communes françaises</title>
+  <meta name="description" content="Comparaison automatique d'une commune française avec jusqu'à dix communes de taille et de profil sectoriel similaires. Données ouvertes Insee — évolution annuelle du nombre d'entreprises (fichier Insee Side) et populations légales.">
+
+  <!-- Open Graph (Facebook / LinkedIn / Slack / Discord previews) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Comparateur Insee — communes françaises">
+  <meta property="og:title" content="Comparateur d'entreprises — communes françaises">
+  <meta property="og:description" content="Comparaison automatique d'une commune française avec jusqu'à dix communes de taille et de profil sectoriel similaires. Indicateurs : unités légales actives, créations annuelles, croissance sur dix ans, répartition par grand secteur d'activité.">
+  <meta property="og:url" content="https://brunocpu.github.io/comparateur-entreprises-communes/">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:image" content="https://brunocpu.github.io/comparateur-entreprises-communes/assets/icon.svg">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Comparateur d'entreprises — communes françaises">
+  <meta name="twitter:description" content="Compare une commune française à dix voisines de taille et profil sectoriel similaires. Données Insee.">
+  <meta name="twitter:image" content="https://brunocpu.github.io/comparateur-entreprises-communes/assets/icon.svg">
+
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#app">Aller au contenu</a>
+
+<aside id="sticky-banner" class="sticky-banner" role="complementary" aria-label="Cible analysée" hidden aria-hidden="true" inert>
+  <div class="container">
+    <div class="sticky-banner-inner">
+      <span class="sticky-eyebrow">Cible</span>
+      <strong id="sticky-target-name"></strong>
+      <span class="sticky-scope" id="sticky-scope"></span>
+      <button type="button" class="btn-link" id="sticky-change">Changer ↑</button>
+    </div>
+  </div>
+</aside>
+
+<header class="app-header">
+  <div class="container">
+    <p class="header-eyebrow">Comparateur · Données Insee · 2026</p>
+    <h1>Une commune, dix comparables, <em>quatre repères</em></h1>
+    <p class="subtitle">
+      Pour chaque commune française, dix communes de taille et de profil économique proches.
+      À la clé : combien d'entreprises y sont actives, combien naissent chaque année, comment leur
+      nombre a évolué depuis 2014, et quels secteurs pèsent le plus.
+    </p>
+    <p class="header-meta" id="header-meta" hidden>
+      <span id="cache-status"></span>
+      <button type="button" id="btn-refresh" class="btn-link">Rafraîchir les données</button>
+    </p>
+  </div>
+</header>
+
+<main class="container" id="app">
+
+  <section id="bootstrap" class="card">
+    <h2>Chargement des données Insee</h2>
+    <p>
+      Données de ~34 000 communes : entreprises actives, créations,
+      population municipale (sources Insee — fichier Side et populations
+      légales du Recensement). Le navigateur reçoit un fichier compact pré-bundlé
+      (~2 MB) puis l'indexe localement pour un accès hors ligne. Le bouton
+      « Rafraîchir les données » du bandeau lance un téléchargement complet
+      depuis l'API Insee.
+    </p>
+    <div class="row">
+      <button id="btn-pull" class="btn btn-primary" hidden>Lancer le chargement</button>
+    </div>
+    <div id="progress" class="progress" hidden role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div id="progress-bar" class="progress-bar"></div>
+    </div>
+    <p id="progress-label" class="progress-label" aria-live="polite"></p>
+  </section>
+
+  <section id="errors" class="card error-card" hidden role="alert" aria-live="assertive">
+    <h2 id="error-title" tabindex="-1">Comparaison indisponible</h2>
+    <p id="error-message"></p>
+  </section>
+
+  <div id="tabs" class="search-tabs" role="tablist" hidden>
+    <button type="button" class="search-tab" role="tab" id="tab-single" data-tab="single" aria-selected="true"  aria-controls="panel-single" tabindex="0">Une commune</button>
+    <button type="button" class="search-tab" role="tab" id="tab-multi"  data-tab="multi"  aria-selected="false" aria-controls="panel-multi"  tabindex="-1">Plusieurs communes</button>
+  </div>
+
+  <div role="tabpanel" id="panel-single" aria-labelledby="tab-single" hidden>
+
+  <section id="search" class="card search-card" hidden>
+    <div class="search-row">
+      <div class="field commune-field">
+        <label for="commune-input" class="visually-hidden">Commune (nom ou code Insee)</label>
+        <input id="commune-input" type="text"
+               autocomplete="off" inputmode="search"
+               role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="autocomplete"
+               placeholder="Saisir un nom ou un code Insee">
+        <ul id="autocomplete" class="autocomplete" role="listbox" aria-label="Suggestions de communes"></ul>
+      </div>
+      <button id="btn-analyze" class="btn btn-primary" disabled>Analyser</button>
+    </div>
+
+    <p id="search-hint" class="search-hint muted small" aria-live="polite" hidden></p>
+
+    <fieldset class="scope-fieldset">
+      <legend class="visually-hidden">Zone de comparaison</legend>
+      <div class="scope-segments" role="radiogroup" aria-label="Zone de comparaison">
+        <button type="button" class="scope-segment" role="radio" data-scope="national"    aria-checked="false" tabindex="-1">Toute la France</button>
+        <button type="button" class="scope-segment" role="radio" data-scope="region"      aria-checked="false" tabindex="-1">Même région</button>
+        <button type="button" class="scope-segment" role="radio" data-scope="departement" aria-checked="true"  tabindex="0">Même département</button>
+        <button type="button" class="scope-segment" role="radio" data-scope="distance"    aria-checked="false" tabindex="-1">Autour</button>
+      </div>
+
+      <div id="scope-context" class="scope-context" hidden>
+        <p id="scope-context-cible" class="scope-context-cible"></p>
+        <div id="scope-sub-region" class="scope-sub" hidden>
+          <label for="scope-region" class="visually-hidden">Région à comparer</label>
+          <select id="scope-region"></select>
+        </div>
+        <div id="scope-sub-departement" class="scope-sub" hidden>
+          <label for="scope-departement" class="visually-hidden">Département à comparer</label>
+          <select id="scope-departement"></select>
+        </div>
+        <div id="scope-sub-distance" class="scope-sub" hidden>
+          <label for="radius" class="visually-hidden">Rayon en kilomètres</label>
+          <input id="radius" type="number" min="5" max="500" step="5" value="50" placeholder="Rayon en km">
+          <p id="rayon-count" class="muted small"></p>
+        </div>
+      </div>
+    </fieldset>
+  </section>
+
+  <div id="search-summary" class="search-summary" hidden>
+    <span class="search-summary-eyebrow">Cible</span>
+    <strong id="summary-target-name"></strong>
+    <span class="search-summary-scope" id="summary-scope"></span>
+    <button type="button" class="btn-link search-summary-modify" id="btn-modify">Modifier ↑</button>
+  </div>
+
+  <section id="results" hidden>
+
+    <article id="target-card" class="card">
+      <h2 id="target-name" tabindex="-1">Commune analysée</h2>
+      <p id="target-meta" class="muted"></p>
+
+      <div class="indicators">
+        <div class="indicator">
+          <span class="indicator-label">Entreprises actives</span>
+          <span class="indicator-value" id="ind-stock">—</span>
+          <div class="indicator-bullet" id="ind-stock-bullet"></div>
+          <span class="indicator-delta" id="ind-stock-delta"></span>
+        </div>
+        <div class="indicator">
+          <span class="indicator-label">Entreprises pour 1 000 habitants</span>
+          <span class="indicator-value" id="ind-density">—</span>
+          <div class="indicator-bullet" id="ind-density-bullet"></div>
+          <span class="indicator-delta" id="ind-density-delta"></span>
+        </div>
+        <div class="indicator">
+          <span class="indicator-label">Croissance 2014→2023</span>
+          <span class="indicator-value" id="ind-growth">—</span>
+          <div class="indicator-bullet" id="ind-growth-bullet"></div>
+          <span class="indicator-delta" id="ind-growth-delta"></span>
+        </div>
+        <div class="indicator">
+          <span class="indicator-label">Créations d'entreprises / an</span>
+          <span class="indicator-value" id="ind-crea">—</span>
+          <div class="indicator-bullet" id="ind-crea-bullet"></div>
+          <span class="indicator-delta" id="ind-crea-delta"></span>
+        </div>
+      </div>
+
+      <p id="theoretical-gap" class="muted small"></p>
+    </article>
+
+    <article class="card">
+      <h2>Répartition par grand secteur d'activité</h2>
+      <p class="muted small">Part de chaque secteur dans les entreprises actives de la commune — comparée à la médiane des communes comparables. Nomenclature Insee A10 hors agriculture (9 secteurs publiés à l'échelle communale).</p>
+      <div id="sector-chart" class="sector-chart"></div>
+      <p id="sector-note" class="muted small" hidden></p>
+    </article>
+
+    <article class="card">
+      <h2 id="comparables-h2">Communes comparables</h2>
+      <p id="comparables-warning" class="comparables-warning" hidden aria-live="polite"></p>
+      <p class="muted small">Jusqu'à 10 communes les plus proches sur taille de population et répartition sectorielle
+      (filtres : population comprise entre 80 % et 125 % de la commune analysée, profil sectoriel publié à au moins 95 %, zone géographique au choix).</p>
+      <div class="table-wrap">
+        <table id="comparables-table">
+          <thead>
+            <tr>
+              <th scope="col">Commune</th>
+              <th scope="col">Dépt</th>
+              <th scope="col">Population</th>
+              <th scope="col">Entreprises actives</th>
+              <th scope="col">Pour 1 000 hab.</th>
+              <th scope="col">Croissance 2014→2023</th>
+              <th scope="col">Créations / an</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+
+      <div class="row">
+        <button type="button" id="btn-show-all" class="btn-link" hidden>Voir les 10 communes comparables ↓</button>
+      </div>
+
+      <div class="row">
+        <button id="btn-export" class="btn btn-secondary">Exporter CSV</button>
+        <button id="btn-print" class="btn btn-secondary" onclick="window.print()">Imprimer / PDF</button>
+      </div>
+    </article>
+
+  </section>
+
+  </div><!-- /#panel-single -->
+
+  <div role="tabpanel" id="panel-multi" aria-labelledby="tab-multi" hidden>
+
+  <section id="search-multi" class="card search-card" hidden>
+    <p class="muted small">Comparez plusieurs communes côte à côte. Aucune sélection automatique n'est générée ; vous choisissez librement les communes à comparer.</p>
+
+    <div class="custom-add-row">
+      <div class="field commune-field">
+        <label for="multi-input" class="visually-hidden">Ajouter une commune</label>
+        <input id="multi-input" type="text"
+               autocomplete="off" inputmode="search"
+               role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="multi-autocomplete"
+               placeholder="Saisir un nom ou un code Insee à ajouter">
+        <ul id="multi-autocomplete" class="autocomplete" role="listbox" aria-label="Suggestions de communes"></ul>
+      </div>
+    </div>
+
+    <div id="multi-chips" class="commune-chips" aria-live="polite"></div>
+
+    <div id="multi-table-wrap" class="table-wrap" hidden>
+      <table id="multi-table">
+        <thead>
+          <tr>
+            <th scope="col">Commune</th>
+            <th scope="col">Dépt</th>
+            <th scope="col">Population</th>
+            <th scope="col">Entreprises actives</th>
+            <th scope="col">Pour 1 000 hab.</th>
+            <th scope="col">Croissance 2014→2023</th>
+            <th scope="col">Créations / an</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p id="multi-empty" class="muted small">
+      Ajoutez au moins deux communes pour voir la comparaison.
+    </p>
+
+    <div class="row">
+      <button id="btn-multi-export" class="btn btn-secondary" hidden>Exporter CSV</button>
+      <button id="btn-multi-print"  class="btn btn-secondary" hidden onclick="window.print()">Imprimer / PDF</button>
+    </div>
+  </section>
+
+  </div><!-- /#panel-multi -->
+
+</main>
+
+<footer class="app-footer">
+  <div class="container">
+    <p>
+      Données : <a href="https://www.insee.fr/fr/metadonnees/source/serie/s2120" target="_blank" rel="noopener">Insee — fichier Side (Système d'information sur la démographie d'entreprises)</a>,
+      populations légales du Recensement de la population, référentiel géographique
+      <a href="https://geo.api.gouv.fr/" target="_blank" rel="noopener">geo.api.gouv.fr</a>.
+      Licence Ouverte version 2.0 (LOV2).
+    </p>
+    <p>
+      Code source <a href="https://github.com/brunocpu/comparateur-entreprises-communes" target="_blank" rel="noopener">sur GitHub</a>
+      sous licence MIT —
+      <span id="data-version">données millésime 2023, publication Insee novembre 2025</span>.
+    </p>
+    <div class="methodo">
+      <p class="methodo-intro">
+        Le comparateur présente, pour chaque commune, son positionnement au regard de dix communes
+        comparables sélectionnées sur leur taille démographique et leur profil sectoriel. Les données
+        sont issues du fichier Side (démographie d'entreprises) et des populations légales du
+        Recensement, publiés par l'Insee sous Licence Ouverte 2.0.
+      </p>
+      <details>
+        <summary>Note méthodologique</summary>
+        <p>
+          <strong>Périmètre des communes comparables.</strong> La sélection s'opère en deux étapes. Un
+          premier filtre retient les communes dont la population municipale appartient à la bande
+          [cible / 1,25 ; cible × 1,25]. Sont également écartées les communes dont la couverture
+          sectorielle publiée par l'Insee est inférieure à 95 % (cellules sectorielles occultées au
+          titre du secret statistique : profil trop lacunaire pour porter une comparaison). Les
+          communes restantes sont ensuite classées par un score composite qui combine, par ordre
+          décroissant de pondération : la similarité du profil sectoriel (composante principale),
+          l'écart relatif de taille démographique (composante secondaire) et, en mode « Autour de la
+          commune », la distance géographique (composante d'arbitrage). Les pondérations exactes
+          figurent dans la documentation technique du dépôt. Les dix communes au score le plus bas
+          constituent la sélection de référence.
+        </p>
+        <p>
+          <strong>Portée des indicateurs.</strong> Les unités légales sont rattachées à leur commune
+          d'implantation administrative, c'est-à-dire à l'adresse d'enregistrement officielle de
+          chaque unité dans le répertoire Insee des entreprises. Cette information ne préjuge pas
+          de la localisation effective de l'activité
+          économique : une unité légale dont le siège est implanté dans une commune mais dont les
+          établissements opérationnels se situent ailleurs reste comptabilisée à son adresse de siège.
+          Les communes accueillant des sièges sociaux peuvent ainsi présenter un nombre d'entreprises actives
+          supérieur à l'activité économique qui s'y déroule effectivement ; à l'inverse, les communes à
+          dominante résidentielle apparaissent sous-représentées au regard de leur tissu économique
+          fonctionnel. Les effectifs salariés ne sont pas mobilisés : leur diffusion n'est pas autorisée
+          à l'échelle communale.
+        </p>
+        <p>
+          <strong>Millésimes et nomenclatures.</strong> La population correspond au millésime légal au
+          1<sup>er</sup> janvier 2026, établi à partir des enquêtes annuelles du recensement
+          2018-2022 (millésime « 2023 »). L'évolution du nombre d'entreprises actives est mesurée entre 2014
+          et 2023 ; la période traverse plusieurs évolutions méthodologiques de la statistique
+          d'entreprises (refonte du répertoire Insee des entreprises, généralisation du statut de
+          micro-entrepreneur) susceptibles d'affecter la comparabilité dans le temps. Les créations
+          2024 relèvent du périmètre Side et incluent les micro-entrepreneurs. Le profil sectoriel
+          s'appuie sur la
+          nomenclature agrégée A10 hors agriculture (9 secteurs ; le secteur agricole AZ n'est pas
+          publié à la maille communale par l'Insee). Pour les communes de faible effectif, certaines
+          cellules sectorielles sont occultées au titre du secret statistique.
+        </p>
+      </details>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
