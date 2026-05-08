@@ -1,0 +1,32 @@
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node / build artefacts
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.parcel-cache/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Logs / temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tmp
