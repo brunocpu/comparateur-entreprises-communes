@@ -1,0 +1,21 @@
+version: 2
+
+# Surveillance des dépendances + des versions d'actions GitHub.
+# Périodicité mensuelle : devDeps marginales (resvg-js, wawoff2, @fontsource/*),
+# pas la peine de spammer la boîte mail à chaque sortie patch.
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "chore(ci)"
