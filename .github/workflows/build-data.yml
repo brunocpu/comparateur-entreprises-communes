@@ -1,0 +1,37 @@
+name: Refresh bundled data
+
+# Régénère data/communes-2023.json depuis l'API Insee Melodi.
+# - Cron annuel autour de la publication Insee Side (novembre).
+# - Manual trigger via l'onglet Actions (workflow_dispatch).
+# Si le contenu a changé : commit + push, ce qui déclenche le workflow Pages.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 15 11 *'   # 15 novembre 04:00 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Pull Insee + build artefact
+        run: node scripts/build-data.mjs
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "Aucun changement dans data/."
+          else
+            git commit -m "chore(data): refresh bundled data depuis l'API Insee Side"
+            git push
+          fi
