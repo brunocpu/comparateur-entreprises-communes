@@ -82,17 +82,20 @@ function buildSvg() {
     de taille et de profil économique proches. Données Insee Side.
   </text>
 
-  <!-- ===== Colonne droite : encart « indicateur + bullet chart » ===== -->
+  <!-- ===== Colonne droite : encart « indicateur + bullet chart » =====
+       Données réelles d'Arles (Bouches-du-Rhône, 13) — sélectionnée parce
+       qu'elle compte 11 communes comparables dans son département (vue
+       par défaut du sélecteur de zone). ===== -->
   <g transform="translate(770, 80)">
     <!-- Card surface beige clair, filet papier -->
     <rect x="0" y="0" width="360" height="470" fill="${SURFACE}" stroke="${RULE}" stroke-width="1" rx="6"/>
 
     <!-- Header card : commune cible -->
     <text x="24" y="44" font-family="GeistMono" font-size="11" fill="${INK_SUBTLE}" letter-spacing="2.2">
-      CIBLE · DRÔME
+      CIBLE · BOUCHES-DU-RHÔNE
     </text>
     <text x="24" y="80" font-family="Fraunces" font-weight="500" font-size="28" fill="${INK}" letter-spacing="-0.6">
-      Romans-sur-Isère
+      Arles
     </text>
     <line x1="24" y1="100" x2="336" y2="100" stroke="${RULE}"/>
 
@@ -101,50 +104,55 @@ function buildSvg() {
       ENTREPRISES ACTIVES
     </text>
     <text x="24" y="180" font-family="Fraunces" font-weight="400" font-size="56" fill="${INK}" letter-spacing="-1.4">
-      4 217
+      5 069
     </text>
 
-    <!-- Bullet chart : Q1—Q3 ribbon + médiane + cible -->
+    <!-- Bullet chart : Q1—Q3 ribbon + médiane + cible.
+         Domaine [3349 ; 5253] (12 % de padding autour des extrêmes).
+         Q1=3533 → 9,7 % → x=30
+         Médiane=4038 → 36,2 % → x=113
+         Q3=4227 → 46,1 % → x=144
+         Cible=5069 → 90,3 % → x=282 (au-dessus du quart supérieur) -->
     <g transform="translate(24, 210)">
       <line x1="0" y1="14" x2="312" y2="14" stroke="${RULE}" stroke-width="1"/>
-      <rect x="78" y="6" width="160" height="16" fill="${PAPER_DEEP}"/>
-      <line x1="158" y1="2" x2="158" y2="26" stroke="${INK_SUBTLE}" stroke-width="1.5"/>
-      <circle cx="118" cy="14" r="9" fill="${ACCENT}" stroke="${SURFACE}" stroke-width="3"/>
+      <rect x="30" y="6" width="114" height="16" fill="${PAPER_DEEP}"/>
+      <line x1="113" y1="2" x2="113" y2="26" stroke="${INK_SUBTLE}" stroke-width="1.5"/>
+      <circle cx="282" cy="14" r="9" fill="${ACCENT}" stroke="${SURFACE}" stroke-width="3"/>
     </g>
     <text x="24" y="262" font-family="GeistMono" font-size="11" fill="${INK_SUBTLE}" letter-spacing="0.5">
-      Q1 3 580 · médiane 4 720 · Q3 5 240
+      Q1 3 533 · médiane 4 038 · Q3 4 227
     </text>
 
     <line x1="24" y1="284" x2="336" y2="284" stroke="${RULE}"/>
 
-    <!-- Profil sectoriel : 3 secteurs représentatifs -->
+    <!-- Profil sectoriel : 3 secteurs dominants d'Arles, scale max 60 % -->
     <text x="24" y="312" font-family="GeistMono" font-size="11" fill="${INK_SUBTLE}" letter-spacing="2.2">
       RÉPARTITION SECTORIELLE
     </text>
 
-    <!-- Industrie -->
-    <text x="24" y="342" font-family="Geist" font-size="14" fill="${INK}">Industrie</text>
-    <text x="336" y="342" font-family="GeistMono" font-size="12" fill="${INK_SUBTLE}" text-anchor="end">14,2 %</text>
+    <!-- Commerce, transports : 27,4 % | médiane 25,9 % -->
+    <text x="24" y="342" font-family="Geist" font-size="14" fill="${INK}">Commerce, transports</text>
+    <text x="336" y="342" font-family="GeistMono" font-size="12" fill="${INK_SUBTLE}" text-anchor="end">27,4 %</text>
     <rect x="24" y="350" width="312" height="6" fill="${PAPER_DEEP}"/>
-    <rect x="24" y="350" width="74" height="6" fill="${ACCENT}"/>
-    <line x1="118" y1="346" x2="118" y2="360" stroke="${MEDIAN}" stroke-width="2"/>
-    <circle cx="118" cy="346" r="4" fill="${MEDIAN}"/>
+    <rect x="24" y="350" width="142" height="6" fill="${ACCENT}"/>
+    <line x1="158" y1="346" x2="158" y2="360" stroke="${MEDIAN}" stroke-width="2"/>
+    <circle cx="158" cy="346" r="4" fill="${MEDIAN}"/>
 
-    <!-- Commerce / transports / hébergement -->
-    <text x="24" y="385" font-family="Geist" font-size="14" fill="${INK}">Commerce, transports</text>
-    <text x="336" y="385" font-family="GeistMono" font-size="12" fill="${INK_SUBTLE}" text-anchor="end">28,7 %</text>
+    <!-- Services scientifiques : 17,0 % | médiane 17,3 % -->
+    <text x="24" y="385" font-family="Geist" font-size="14" fill="${INK}">Services scientifiques</text>
+    <text x="336" y="385" font-family="GeistMono" font-size="12" fill="${INK_SUBTLE}" text-anchor="end">17,0 %</text>
     <rect x="24" y="393" width="312" height="6" fill="${PAPER_DEEP}"/>
-    <rect x="24" y="393" width="184" height="6" fill="${ACCENT}"/>
-    <line x1="170" y1="389" x2="170" y2="403" stroke="${MEDIAN}" stroke-width="2"/>
-    <circle cx="170" cy="389" r="4" fill="${MEDIAN}"/>
+    <rect x="24" y="393" width="88" height="6" fill="${ACCENT}"/>
+    <line x1="90" y1="389" x2="90" y2="403" stroke="${MEDIAN}" stroke-width="2"/>
+    <circle cx="90" cy="389" r="4" fill="${MEDIAN}"/>
 
-    <!-- Services scientifiques -->
-    <text x="24" y="428" font-family="Geist" font-size="14" fill="${INK}">Services scientifiques</text>
-    <text x="336" y="428" font-family="GeistMono" font-size="12" fill="${INK_SUBTLE}" text-anchor="end">11,4 %</text>
+    <!-- Administration, santé, éducation : 14,0 % | médiane 20,2 % -->
+    <text x="24" y="428" font-family="Geist" font-size="14" fill="${INK}">Administration, santé</text>
+    <text x="336" y="428" font-family="GeistMono" font-size="12" fill="${INK_SUBTLE}" text-anchor="end">14,0 %</text>
     <rect x="24" y="436" width="312" height="6" fill="${PAPER_DEEP}"/>
-    <rect x="24" y="436" width="58" height="6" fill="${ACCENT}"/>
-    <line x1="84" y1="432" x2="84" y2="446" stroke="${MEDIAN}" stroke-width="2"/>
-    <circle cx="84" cy="432" r="4" fill="${MEDIAN}"/>
+    <rect x="24" y="436" width="73" height="6" fill="${ACCENT}"/>
+    <line x1="105" y1="432" x2="105" y2="446" stroke="${MEDIAN}" stroke-width="2"/>
+    <circle cx="105" cy="432" r="4" fill="${MEDIAN}"/>
   </g>
 </svg>`;
 }
