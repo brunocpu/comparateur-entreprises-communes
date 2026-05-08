@@ -8,7 +8,8 @@
     "test": "node --test test/units.mjs",
     "test:e2e": "node test-pull.mjs",
     "build:data": "node scripts/build-data.mjs",
-    "build:og": "node scripts/build-og-image.mjs"
+    "build:og": "node scripts/build-og-image.mjs",
+    "build:sw-version": "node scripts/compute-sw-version.mjs"
   },
   "devDependencies": {
     "@fontsource/fraunces": "^5.2.9",
