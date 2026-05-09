@@ -43,10 +43,20 @@ export async function setMeta(key, value) {
 }
 
 export async function bulkPut(records) {
+  // Pattern IndexedDB idiomatique : une seule transaction, on attend
+  // `oncomplete` qui ne se déclenche qu'après que toutes les puts soient
+  // sérialisées et écrites. Bien plus robuste que `Promise.all` sur 34 k
+  // requêtes simultanées (saturait Safari iOS et alourdissait inutilement
+  // la mémoire JS sans gain de débit côté IDB qui sérialise déjà).
   const db = await openDB();
-  const store = tx(db, 'communes', 'readwrite');
-  const promises = records.map(r => reqToPromise(store.put(r)));
-  await Promise.all(promises);
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('communes', 'readwrite');
+    const store = transaction.objectStore('communes');
+    transaction.oncomplete = () => resolve();
+    transaction.onerror    = () => reject(transaction.error);
+    transaction.onabort    = () => reject(transaction.error);
+    for (const r of records) store.put(r);
+  });
 }
 
 export async function getCommune(code) {

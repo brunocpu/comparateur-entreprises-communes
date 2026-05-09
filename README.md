@@ -1,4 +1,4 @@
-# Comparateur d'entreprises — communes françaises
+# Démographie des entreprises entre communes comparables
 
 Application web statique qui compare les **~34 000 communes françaises** selon leur démographie d'entreprises (stocks d'unités légales, créations annuelles, profil sectoriel) à partir des données ouvertes Insee.
 
@@ -91,13 +91,21 @@ Bouton « Rafraîchir les données » dans le header : lance un téléchargement
 
 ## Tests
 
+Deux niveaux :
+
 ```bash
-node test-pull.mjs
+# Unitaires offline — ~100 ms, pas de réseau.
+npm test
+
+# Bout-en-bout réseau — ~35 s, pull complet depuis l'API Insee.
+npm run test:e2e
 ```
 
-Lance le pull complet depuis l'API Insee, vérifie l'extraction des ~34 000 communes (Romans-sur-Isère 26281 testée bout-en-bout), valide les filtres méthodologiques, le matching scope national / régional / départemental / distance, et l'algorithme `countInRadius`.
+Les unitaires (`test/units.mjs`) couvrent les helpers pures : `quantile`, `cosine`, `haversine`, `relDelta`, `summarizeComparables`, `findComparables`, `parseCsvLine`, `headerIndex`, `normalize`, `escapeHtml`, formatteurs fr-FR. 64 cas, runner natif `node --test`, zéro dépendance.
 
-Pré-requis : **Node ≥ 18** (utilise `fetch`, `DecompressionStream` et `TextDecoderStream` natifs, comme le navigateur).
+Le harness e2e (`test-pull.mjs`) vérifie l'extraction réelle depuis l'API Insee Melodi, le matching aux quatre modes de zone, l'algorithme `countInRadius`, sur la cible Romans-sur-Isère (26281).
+
+Pré-requis : **Node ≥ 18** (utilise `fetch`, `DecompressionStream` et `TextDecoderStream` natifs).
 
 ---
 
@@ -154,6 +162,9 @@ js/
                         sticky banner, search summary, multi-compare
   export.js             export CSV (UTF-8 BOM, séparateur `;`)
   format.js             formattage fr-FR (Intl.NumberFormat)
+  util.js               helpers pures partagés (normalize, escapeHtml)
+test/
+  units.mjs             tests unitaires offline (npm test, ~100 ms)
 ```
 
 ---
