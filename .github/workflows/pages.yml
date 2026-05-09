@@ -32,6 +32,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Compute SW cache version (hash du SHELL)
+        run: node scripts/compute-sw-version.mjs
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
