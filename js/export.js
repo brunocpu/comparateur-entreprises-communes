@@ -33,7 +33,7 @@ export function exportCsv(target, comparables, summary, scope) {
   else if (scope.kind === 'distance')      scopeLabel = `Rayon ${scope.value} km`;
 
   // Bandeau de métadonnées (lecteur humain en haut du fichier)
-  rows.push(`# Comparateur d'entreprises — communes françaises`);
+  rows.push(`# Démographie des entreprises entre communes comparables`);
   rows.push(`# Cible : ${target.name} (${target.code})`);
   rows.push(`# Zone de comparaison : ${scopeLabel}`);
   rows.push(`# Sélection : ${comparables.length} commune(s) comparable(s)`);
@@ -93,7 +93,7 @@ export function exportCsv(target, comparables, summary, scope) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const safeName = target.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-');
+  const safeName = target.name.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-zA-Z0-9]+/g, '-');
   a.download = `comparateur-${target.code}-${safeName}.csv`;
   document.body.appendChild(a);
   a.click();
