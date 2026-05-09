@@ -1,7 +1,7 @@
 {
-  "name": "Démographie des entreprises entre communes comparables",
+  "name": "Comparateur de communes — démographie d'entreprises",
   "short_name": "Comparateur communes",
-  "description": "Comparer les communes françaises selon leur démographie d'entreprises (Insee Side).",
+  "description": "Comparer une commune française à dix communes de taille et de profil sectoriel similaires sur les indicateurs Insee de démographie d'entreprises.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

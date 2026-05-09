@@ -1,0 +1,61 @@
+name: Signaler un bug
+description: Comportement inattendu ou erreur dans l'application
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler ce bug. Plus le rapport est précis, plus il est rapide à traiter.
+
+  - type: input
+    id: url
+    attributes:
+      label: URL ou commune testée
+      description: L'URL exacte au moment du bug, ou le nom et code Insee de la commune analysée.
+      placeholder: ex. https://brunocpu.github.io/comparateur-entreprises-communes/ après recherche « Arles » avec la zone « Même département »
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: Navigateur / système
+      description: Indiquer la version exacte si possible.
+      placeholder: ex. Firefox 124 / macOS 15.4 — ou Chrome Android 130 / Pixel 8
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportement attendu
+      description: Ce que vous pensiez voir se produire.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportement observé
+      description: Ce qui s'est réellement passé. Captures d'écran bienvenues.
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console navigateur
+      description: |
+        Si vous savez le faire : ouvrir la console (F12 → Console) et coller toute erreur rouge ou avertissement suspect.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Vérifications
+      options:
+        - label: J'ai recherché dans les issues existantes pour éviter un doublon.
+          required: true
+        - label: J'ai cliqué sur « Rafraîchir les données » dans le bandeau pour vérifier que le problème persiste avec les données fraîches.
+          required: false

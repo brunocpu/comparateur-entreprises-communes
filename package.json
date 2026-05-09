@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Tells Node to treat js/*.js as ES modules. The browser app does not read this file.",
+  "description": "Comparer une commune française à dix communes de taille et de profil sectoriel similaires sur les indicateurs Insee de démographie d'entreprises.",
   "scripts": {
     "test": "node --test test/units.mjs",
     "test:e2e": "node test-pull.mjs",

@@ -60,26 +60,26 @@ function buildSvg() {
     COMPARATEUR · DONNÉES INSEE · 2026
   </text>
 
-  <!-- H1 trois lignes, Fraunces 88pt, chute en italique rouille -->
-  <text x="80" y="220" font-family="Fraunces" font-weight="500" font-size="88" fill="${INK}" letter-spacing="-1.6">
-    Une commune,
+  <!-- H1 deux lignes, Fraunces 48pt, seconde ligne en italique rouille -->
+  <text x="80" y="220" font-family="Fraunces" font-weight="500" font-size="48" fill="${INK}" letter-spacing="-0.8">
+    Comparateur de communes —
   </text>
-  <text x="80" y="320" font-family="Fraunces" font-weight="500" font-size="88" fill="${INK}" letter-spacing="-1.6">
-    dix comparables,
-  </text>
-  <text x="80" y="420" font-family="Fraunces" font-style="italic" font-weight="400" font-size="88" fill="${MEDIAN}" letter-spacing="-1.6">
-    quatre repères.
+  <text x="80" y="290" font-family="Fraunces" font-style="italic" font-weight="400" font-size="48" fill="${MEDIAN}" letter-spacing="-0.8">
+    démographie des entreprises
   </text>
 
   <!-- Filet horizontal entre titre et sous-titre, façon Datawrapper -->
-  <line x1="80" y1="475" x2="200" y2="475" stroke="${INK}" stroke-width="2"/>
+  <line x1="80" y1="345" x2="200" y2="345" stroke="${INK}" stroke-width="2"/>
 
-  <!-- Sous-titre Geist, deux lignes -->
-  <text x="80" y="528" font-family="Geist" font-weight="400" font-size="22" fill="${INK_MUTED}">
-    Pour chaque commune française, dix communes
+  <!-- Sous-titre Geist, trois lignes -->
+  <text x="80" y="398" font-family="Geist" font-weight="400" font-size="22" fill="${INK_MUTED}">
+    Positionner une commune française dans sa strate de
   </text>
-  <text x="80" y="560" font-family="Geist" font-weight="400" font-size="22" fill="${INK_MUTED}">
-    de taille et de profil économique proches. Données Insee Side.
+  <text x="80" y="430" font-family="Geist" font-weight="400" font-size="22" fill="${INK_MUTED}">
+    comparables sur les indicateurs Insee Side : entreprises
+  </text>
+  <text x="80" y="462" font-family="Geist" font-weight="400" font-size="22" fill="${INK_MUTED}">
+    actives, créations, croissance, profil sectoriel A10.
   </text>
 
   <!-- ===== Colonne droite : encart « indicateur + bullet chart » =====

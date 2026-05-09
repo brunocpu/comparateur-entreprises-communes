@@ -1,4 +1,4 @@
-# Démographie des entreprises entre communes comparables
+# Comparateur de communes — démographie d'entreprises
 
 Application web statique qui compare les **~34 000 communes françaises** selon leur démographie d'entreprises (stocks d'unités légales, créations annuelles, profil sectoriel) à partir des données ouvertes Insee.
 
@@ -6,6 +6,14 @@ Deux modes d'usage :
 
 - **Une commune** — saisis une commune, l'app calcule une sélection de 10 communes comparables (taille démographique et profil sectoriel similaires) et restitue le positionnement de la cible : indicateurs cardinaux, mini bullet-charts par indicateur, profil sectoriel A10 avec marqueur médian, tableau des comparables avec barres de fond proportionnelles, quartiles Q1 / médiane / Q3.
 - **Plusieurs communes** — comparaison libre de 2 à 10 communes au choix, sans contrainte de taille ni de profil. Pour confronter des villes voisines, ou des communes à profils contrastés.
+
+## Pourquoi cet outil
+
+Les données Insee sur la démographie d'entreprises (fichier Side, populations légales) sont riches mais dispersées : trois jeux à rapprocher, plusieurs millésimes, une nomenclature sectorielle agrégée, des règles de secret statistique à respecter. Pour un usage ponctuel — positionner rapidement une commune par rapport à des comparables crédibles — la barre d'entrée est disproportionnée.
+
+Cet outil rend l'exercice immédiat. À partir d'une commune cible, il sélectionne automatiquement dix communes comparables sur taille démographique (±25 %) et proximité de profil sectoriel A10, et restitue le positionnement de la cible sur quatre indicateurs : entreprises actives, densité pour 1 000 habitants, croissance 2014→2023, créations annuelles. Le mode « plusieurs communes » permet une comparaison libre, sans contrainte de strate, pour confronter des voisines ou des profils contrastés.
+
+Public cible naturel : développeurs économiques de collectivités, agences de développement économique, chargés de mission en agences d'urbanisme, étudiants et chercheurs en économie territoriale, ainsi que toute personne ayant besoin d'objectiver une comparaison communale sur des indicateurs économiques de base.
 
 ---
 
