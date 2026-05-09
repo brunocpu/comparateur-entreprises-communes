@@ -1,5 +1,6 @@
 import { A10_SECTORS, SECTOR_LABELS, SECTOR_DETAILS } from './insee-api.js';
 import { fmtInt, fmtDec1, fmtPct, fmtPctSigned } from './format.js';
+import { escapeHtml } from './util.js';
 
 // Respect du paramètre système « réduire les animations » (RGAA 13.x).
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -114,10 +115,10 @@ export function setupAutocomplete(input, listEl, getItems, onPick) {
 
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
-      // Auto-pick on Enter when there's only one match, or use the active one.
+      // Auto-pick on Enter : on prend l'option active si l'utilisateur a
+      // navigué avec ↑/↓, sinon le premier résultat (= meilleur match).
       if (active >= 0 && items[active]) { e.preventDefault(); pick(items[active]); return; }
-      if (items.length === 1) { e.preventDefault(); pick(items[0]); return; }
-      if (items.length > 1) { e.preventDefault(); pick(items[0]); return; } // pick best match
+      if (items.length >= 1)            { e.preventDefault(); pick(items[0]);      return; }
     }
     if (!items.length) return;
     if (e.key === 'ArrowDown') { e.preventDefault(); active = (active + 1) % items.length; render(); }
@@ -126,12 +127,6 @@ export function setupAutocomplete(input, listEl, getItems, onPick) {
   });
 
   input.addEventListener('blur', () => setTimeout(close, 120));
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-  ));
 }
 
 // ---------- target card ----------
