@@ -1,5 +1,5 @@
 {
-  "name": "Comparateur d'entreprises — communes françaises",
+  "name": "Démographie des entreprises entre communes comparables",
   "short_name": "Comparateur communes",
   "description": "Comparer les communes françaises selon leur démographie d'entreprises (Insee Side).",
   "lang": "fr",
@@ -8,7 +8,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f7f7f5",
-  "theme_color": "#0b3d91",
+  "theme_color": "#1c3d5a",
   "icons": [
     {
       "src": "./assets/icon.svg",
