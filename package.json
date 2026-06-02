@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@fontsource/fraunces": "^5.2.9",
-    "@fontsource/geist-mono": "^5.2.7",
+    "@fontsource/geist-mono": "^5.2.8",
     "@fontsource/geist-sans": "^5.2.5",
     "@resvg/resvg-js": "^2.6.2",
     "wawoff2": "^2.0.1"
