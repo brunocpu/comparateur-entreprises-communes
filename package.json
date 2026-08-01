@@ -12,7 +12,7 @@
     "build:sw-version": "node scripts/compute-sw-version.mjs"
   },
   "devDependencies": {
-    "@fontsource/fraunces": "^5.2.9",
+    "@fontsource/fraunces": "^5.3.0",
     "@fontsource/geist-mono": "^5.2.7",
     "@fontsource/geist-sans": "^5.2.5",
     "@resvg/resvg-js": "^2.6.2",
