@@ -59,7 +59,7 @@ async function tryLoadBundledData() {
 
   try {
     ui.setProgress(0.3, 'Téléchargement des données…');
-    const res = await fetch('./data/communes-2023.json');
+    const res = await fetch('./data/communes-2024.json');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     // res.json() laisse le moteur streamer en interne — empreinte mémoire

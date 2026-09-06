@@ -18,7 +18,7 @@ npx serve .
 
 Puis [http://localhost:8000](http://localhost:8000).
 
-Premier chargement : si `data/communes-2023.json` est présent dans le dépôt, il est récupéré et indexé en IndexedDB en quelques secondes. Sinon, fallback automatique vers le pull live de l'API Insee Melodi (~67 MB, 1 à 2 min).
+Premier chargement : si `data/communes-2024.json` est présent dans le dépôt, il est récupéré et indexé en IndexedDB en quelques secondes. Sinon, fallback automatique vers le pull live de l'API Insee Melodi (~80 MB, 1 à 2 min).
 
 ## Tests
 

@@ -45,7 +45,7 @@ export function exportCsv(target, comparables, summary, scope) {
   const headers = [
     'Type', 'Commune', 'Code Insee', 'Département', 'Population',
     'Entreprises actives', 'Entreprises pour 1 000 habitants',
-    'Croissance 2014→2023', "Créations d'entreprises (annuel)",
+    'Croissance 2014→2024', "Créations d'entreprises (annuel)",
     ...A10_SECTORS.map(s => `Part ${SECTOR_LABELS[s]} (A10)`)
   ];
   rows.push(headers.map(csvEscape).join(sep));
