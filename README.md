@@ -85,6 +85,8 @@ Cet artefact est régénéré annuellement par le workflow GitHub Actions `.gith
 
 Les sources sont par ailleurs contrôlées chaque lundi par `.github/workflows/datasets-watch.yml`, qui exécute `scripts/check-datasets.mjs` (`npm run check:datasets` en local). La sonde confronte les identifiants épinglés dans `js/insee-api.js` au catalogue Melodi et échoue — donc notifie — si un jeu de données a été renommé ou retiré, si une URL de téléchargement ne répond plus, ou si un millésime plus récent est publié. Elle a été ajoutée après le renommage de `DS_SIDE_STOCKS_UL_COM` en `DS_SIDE_STOCKS_COM` (juillet 2026).
 
+Un second script, `scripts/check-millesimes.mjs` (`npm run check:millesimes`), contrôle le contenu plutôt que la disponibilité : il reconstitue depuis le ZIP Insee la série annuelle d'une commune, vérifie que les deux bornes retenues dans l'artefact — année de référence et année cible — correspondent aux valeurs publiées, puis recalcule la croissance sur l'ensemble des communes. Rappel utile : l'application ne conserve que ces deux bornes, les millésimes intermédiaires sont écartés à la lecture.
+
 Chemin de secours : si l'artefact est indisponible (404, première mise en place, etc.), l'app affiche un bouton « Lancer le chargement » qui exécute un téléchargement complet depuis l'API Insee Melodi. Ce chemin télécharge **~80 MB de ZIP CSV** (1 à 2 min en Wi-Fi) :
 
 | Dataset | ZIP | CSV décompressé |
@@ -152,6 +154,7 @@ docs/
 scripts/
   build-data.mjs        exécute pullAll côté Node et écrit data/*.json
   check-datasets.mjs    sonde de disponibilité des sources Insee
+  check-millesimes.mjs  confronte les bornes de l'artefact à la source Insee
 .github/workflows/
   pages.yml             déploiement automatique sur GitHub Pages
   build-data.yml        régénération annuelle de l'artefact (cron)
