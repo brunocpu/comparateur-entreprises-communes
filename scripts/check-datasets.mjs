@@ -1,11 +1,12 @@
 // Sonde de disponibilité des sources de données — exécutée chaque lundi par
 // .github/workflows/datasets-watch.yml.
 //
-// Motivation : en juillet 2026, l'Insee a renommé DS_SIDE_STOCKS_UL_COM en
-// DS_SIDE_STOCKS_COM. L'ancien identifiant renvoyait 400, mais personne ne l'a
-// su : l'artefact pré-bundlé masquait la panne côté visiteurs, et le seul
+// Motivation : les identifiants Melodi ne sont pas stables dans le temps —
+// DS_SIDE_STOCKS_UL_COM est devenu DS_SIDE_STOCKS_COM en juillet 2026, l'ancien
+// identifiant renvoyant dès lors HTTP 400. Une telle rupture reste peu visible :
+// l'artefact pré-bundlé continue de servir les visiteurs, et le seul
 // consommateur de l'API — le cron annuel de build-data.yml — ne s'exécute
-// qu'une fois par an. La rupture serait apparue avec quatre mois de retard.
+// qu'une fois par an. D'où un contrôle hebdomadaire, indépendant des deux.
 //
 // La sonde contrôle quatre choses, à partir des identifiants épinglés dans
 // js/insee-api.js (importés, donc jamais désynchronisés du code) :
@@ -58,8 +59,8 @@ for (const [key, { ds, product }] of Object.entries(PRODUCTS)) {
 
   const entry = catalog.find(d => d.identifier === ds);
   if (!entry) {
-    // Cas du renommage de juillet 2026 : le jeu disparaît du catalogue et
-    // l'endpoint /file répond 400. On propose les candidats les plus proches.
+    // Renommage ou retrait : le jeu disparaît du catalogue et l'endpoint
+    // /file répond 400. On propose les identifiants les plus proches.
     const stem = ds.replace(/^DS_/, '').split('_').slice(0, 2).join('_');
     const near = catalog.map(d => d.identifier).filter(id => id.includes(stem));
     fail('ABSENT', `${ds} ne figure plus dans le catalogue (renommé ou retiré).`
