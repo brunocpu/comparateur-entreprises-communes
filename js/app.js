@@ -1,5 +1,5 @@
 import * as cache from './cache.js';
-import { pullAll } from './insee-api.js';
+import { pullAll, DATA_VERSION } from './insee-api.js';
 import { findComparables, summarizeComparables, countInRadius } from './matching.js';
 import * as ui from './ui.js';
 import { exportCsv } from './export.js';
@@ -36,17 +36,27 @@ let uiInitialized = false;
   wireAnalyze();
   wireExport();
 
-  if (await cache.isReady()) {
+  const ready = await cache.isReady();
+  const cachedVersion = await cache.getMeta('dataVersion');
+
+  if (ready && cachedVersion === DATA_VERSION) {
     await loadFromCache();
     showSearch();
     return;
   }
 
-  // Premier chargement : tente l'artefact pré-bundlé (~2-3 MB gzip) avant
-  // de proposer le pull live (~67 MB de ZIP CSV séquentiels). Si l'artefact
-  // est absent ou inaccessible, on retombe sur le bouton « Lancer le
-  // chargement » classique.
-  await tryLoadBundledData();
+  // Premier chargement, ou données d'un millésime antérieur : (re)prend
+  // l'artefact pré-bundlé (~2,5 MB gzip) avant de proposer le pull live
+  // (~80 MB de ZIP CSV séquentiels). Si l'artefact est absent ou
+  // inaccessible, on retombe sur le bouton « Lancer le chargement ».
+  const loaded = await tryLoadBundledData();
+
+  // Artefact injoignable mais cache exploitable (hors ligne, par exemple) :
+  // mieux vaut servir des données périmées qu'un écran de démarrage.
+  if (!loaded && ready) {
+    await loadFromCache();
+    showSearch();
+  }
 })();
 
 async function tryLoadBundledData() {
@@ -71,7 +81,13 @@ async function tryLoadBundledData() {
     if (!data || !Array.isArray(data.records)) throw new Error('Artefact invalide');
 
     ui.setProgress(0.95, 'Indexation locale…');
+    // Purge avant écriture : on remplace un millésime par un autre, et
+    // `bulkPut` fusionne sur la clé `code` sans supprimer les communes
+    // absentes du nouveau référentiel. L'artefact est déjà téléchargé et
+    // validé à ce stade — vider le cache ne peut plus laisser sans données.
+    await cache.clearAll();
     await cache.bulkPut(data.records);
+    await cache.setMeta('dataVersion', DATA_VERSION);
     await cache.setMeta('lastPullAt', data.builtAt ? Date.parse(data.builtAt) : Date.now());
     await cache.setMeta('lastPullWarnings', data.warnings || []);
     await cache.setMeta('regions', data.regions || []);
@@ -136,10 +152,13 @@ async function doPull(refresh) {
 
   const ctrl = new AbortController();
   try {
-    if (refresh) await cache.clearAll();
     const { records, warnings, regions, departements } = await pullAll(({ ratio, label }) => ui.setProgress(ratio, label), ctrl.signal);
     if (!records.length) throw new Error('Aucune donnée téléchargée — vérifier la connexion ou l\'API Insee.');
+    // Purge après le pull, jamais avant : un échec réseau laissait jusqu'ici
+    // le visiteur sans données jusqu'au rechargement de la page.
+    await cache.clearAll();
     await cache.bulkPut(records);
+    await cache.setMeta('dataVersion', DATA_VERSION);
     await cache.setMeta('lastPullAt', Date.now());
     await cache.setMeta('lastPullWarnings', warnings);
     await cache.setMeta('regions', regions);
