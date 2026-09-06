@@ -3,8 +3,11 @@
 // Filtres durs :
 //   - Population : bande ratio [target/1.25 ; target×1.25] (asymétrique mais
 //     stable en log-échelle ; recommandation Insee statisticien).
-//   - sectorialCoverage ≥ 95 % (sinon le profil sectoriel est trop lacunaire
-//     pour porter une comparaison ; secret stat sur petites cellules).
+//   - sectorialCoverage ≥ 95 %, qui revient en pratique à écarter les communes
+//     sans aucune unité légale : l'Insee ne masque aucune cellule sectorielle,
+//     la couverture vaut donc 1 ou 0 (voir le commentaire dans insee-api.js).
+//     Le seuil est conservé plutôt qu'un test « stock non nul » pour rester
+//     robuste si un millésime ultérieur introduisait des cellules occultées.
 //   - Plancher population cible : 2 000 hab. En dessous, l'analyse n'est pas
 //     statistiquement honnête (siège unique = 30-50 % du stock UL).
 //   - Scope : national / région / département / rayon haversine.

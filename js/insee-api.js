@@ -80,6 +80,10 @@ export const OBSERVATION_YEARS = {
   creations: CREA_YEAR
 };
 
+// Les niveaux à conserver. Le filtre n'est pas optionnel : les codes GEO ne
+// sont pas uniques d'un niveau à l'autre dans ces fichiers. Ainsi « 71203 »
+// désigne à la fois une commune, dont le stock est nul, et une unité urbaine
+// 2020 dont le stock est de 363 — sans ce filtre, les deux se mélangent.
 const KEEP_LEVELS = new Set(['COM', 'ARM']);
 
 // ---------- file download with progress ----------
@@ -203,9 +207,14 @@ export async function pullAll(onProgress, signal) {
   }
 
   // Compute derived indicators per commune.
-  // sectorialCoverage = Σ(A10 publiés) / stock(_T) — < 1 quand l'Insee a
-  // supprimé des cellules au titre du secret statistique (typiquement < 5 UL).
-  // En dessous de ~85 %, la comparaison sectorielle perd de sa valeur.
+  //
+  // sectorialCoverage = Σ(A10) / stock(_T). Le rapport ne prend en pratique que
+  // deux valeurs : 1 pour 33 943 communes, 0 pour 59 — vérifié sur le millésime
+  // 2024. L'Insee publie les neuf secteurs pour chaque commune sans jamais en
+  // occulter, et Σ(A10) est exactement égal à _T ; le 0 vient donc de la garde
+  // ci-dessous, quand la commune n'a aucune unité légale. Le ratio ne mesure pas
+  // une lacune de publication mais l'existence même d'un tissu à comparer — un
+  // profil sectoriel nul ne peut pas porter de cosinus.
   const records = [];
   for (const c of ctx.byCode.values()) {
     if (!c.population || c.population < 50) continue;
