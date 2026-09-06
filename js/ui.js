@@ -799,6 +799,9 @@ export function renderMultiCompare(communes, onRemove) {
     applyBarInCell(document.getElementById('multi-table'), [2, 3, 4, 5, 6]);
   }
   tableWrap.hidden = !hasContent;
+  // La mention de champ suit le tableau : inutile tant qu'aucun chiffre n'est affiché.
+  const noteEl = document.getElementById('multi-note');
+  if (noteEl) noteEl.hidden = !hasContent;
   if (emptyMsg) {
     if (!communes.length) {
       emptyMsg.hidden = false;

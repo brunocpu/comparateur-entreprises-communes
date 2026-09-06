@@ -22,7 +22,7 @@ Public cible naturel : développeurs économiques de collectivités, agences de 
 ### Onglet « Une commune »
 
 - Autocomplete sur 34 002 communes (par nom ou code Insee), reconnaissance des accents.
-- 4 indicateurs cardinaux : **Entreprises actives**, **Entreprises pour 1 000 habitants**, **Croissance 2014→2024**, **Créations d'entreprises annuelles**.
+- 4 indicateurs cardinaux : **Entreprises actives**, **Entreprises pour 1 000 habitants**, **Croissance 2014→2024**, **Créations d'entreprises annuelles**. « Entreprises actives » désigne les unités légales du répertoire Insee, hors agriculture.
 - Sous chaque chiffre : un **bullet chart** SVG montrant Q1—Q3 des comparables + médiane + position de la cible.
 - Profil sectoriel A10 hors agriculture (9 secteurs publiés à l'échelle communale par l'Insee) en barres horizontales, marqueur médian rouille distinct.
 - Tableau des comparables avec **bar-in-cell** (barre de fond proportionnelle dans chaque cellule numérique) et lignes Q1 / médiane / Q3 en pied de tableau.
