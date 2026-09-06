@@ -12,9 +12,7 @@
 //   --zip réutilise un ZIP déjà téléchargé au lieu de reprendre les ~35 Mo.
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { createInflateRaw } from 'node:zlib';
-import { Readable } from 'node:stream';
-import { createInterface } from 'node:readline';
+import { streamCsvFromZip } from '../js/zip-csv.js';
 import { PRODUCTS, STOCK_YEAR, STOCK_BASELINE_YEAR } from '../js/insee-api.js';
 
 const args = process.argv.slice(2);
@@ -47,25 +45,21 @@ if (zipPath && existsSync(zipPath)) {
   if (zipPath) writeFileSync(zipPath, zip);
 }
 
-// Première entrée du ZIP = le CSV de données (deflate brut, en-tête local standard).
-const nameLen = zip.readUInt16LE(26);
-const extraLen = zip.readUInt16LE(28);
-const csv = Readable.from([zip.subarray(30 + nameLen + extraLen)]).pipe(createInflateRaw());
-
+// Le CSV de données est localisé via le répertoire central du ZIP, jamais par
+// position : l'ordre des entrées n'est pas garanti — dans le fichier créations,
+// la première est le CSV de métadonnées. On réutilise l'extracteur du front-end
+// plutôt que d'en réécrire un qui divergerait.
+const arrayBuffer = zip.buffer.slice(zip.byteOffset, zip.byteOffset + zip.byteLength);
 const serie = {};
-let idx = null;
-for await (const line of createInterface({ input: csv, crlfDelay: Infinity })) {
-  if (!idx) {
-    idx = {};
-    line.replace(/^\uFEFF/, '').split(';').map(c => c.replace(/"/g, '')).forEach((c, i) => { idx[c] = i; });
-    continue;
+let h;
+await streamCsvFromZip(arrayBuffer, PRODUCTS.stocks.data, {
+  onHeader: (_, idx) => { h = idx; },
+  onRow: row => {
+    if (row[h.GEO] !== CIBLE || row[h.GEO_OBJECT] !== 'COM') return;
+    if (row[h.SIDE_MEASURE] !== 'LEGAL_UNIT' || row[h.ACTIVITY] !== '_T') return;
+    serie[row[h.TIME_PERIOD]] = Number(row[h.OBS_VALUE]);
   }
-  if (!line.includes(`"${CIBLE}"`)) continue;
-  const p = line.split(';').map(c => c.replace(/"/g, ''));
-  if (p[idx.GEO] !== CIBLE || p[idx.GEO_OBJECT] !== 'COM') continue;
-  if (p[idx.SIDE_MEASURE] !== 'LEGAL_UNIT' || p[idx.ACTIVITY] !== '_T') continue;
-  serie[p[idx.TIME_PERIOD]] = Number(p[idx.OBS_VALUE]);
-}
+});
 
 const annees = Object.keys(serie).sort();
 if (!annees.length) {
