@@ -7,7 +7,7 @@
 
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
-import { pullAll } from '../js/insee-api.js';
+import { pullAll, STOCK_YEAR, DATA_VERSION } from '../js/insee-api.js';
 
 const t0 = Date.now();
 let lastLog = 0;
@@ -27,7 +27,8 @@ try {
   mkdirSync('data', { recursive: true });
   const out = {
     builtAt: new Date().toISOString(),
-    millesime: 2024,
+    millesime: Number(STOCK_YEAR),
+    dataVersion: DATA_VERSION,
     warnings,
     regions,
     departements,

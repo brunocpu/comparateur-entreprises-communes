@@ -59,10 +59,16 @@ export const SECTOR_DETAILS = {
   RU: 'R Arts, spectacles, activités récréatives · S Autres services (associations, réparation, services personnels) · T Ménages employeurs · U Activités extra-territoriales'
 };
 
-const STOCK_YEAR = '2024';
+export const STOCK_YEAR = '2024';
 const STOCK_BASELINE_YEAR = '2014';
 const CREA_YEAR = '2024';
 const POP_YEAR = '2023';
+
+// Millésimes servis par ce build. `js/app.js` compare cette chaîne à celle
+// enregistrée en IndexedDB : si elle diffère, les données locales datent d'un
+// millésime antérieur et doivent être remplacées. Sans ce contrôle, un
+// visiteur déjà venu garde ses anciens chiffres sous les nouveaux libellés.
+export const DATA_VERSION = `${POP_YEAR}-${STOCK_BASELINE_YEAR}-${STOCK_YEAR}-${CREA_YEAR}`;
 
 const KEEP_LEVELS = new Set(['COM', 'ARM']);
 
