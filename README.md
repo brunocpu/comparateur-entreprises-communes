@@ -128,7 +128,7 @@ Pré-requis : **Node ≥ 18** (utilise `fetch`, `DecompressionStream` et `TextDe
 | Entreprises actives | Total unités légales actives | `DS_SIDE_STOCKS_COM` (ACTIVITY=`_T`, SIDE_MEASURE=`LEGAL_UNIT`, TIME_PERIOD=2024) |
 | Entreprises pour 1 000 habitants | UL × 1 000 / population municipale | + `DS_POPULATIONS_REFERENCE` (POPREF_MEASURE=`PMUN`) |
 | Croissance 2014→2024 | (UL_2024 − UL_2014) / UL_2014 | `DS_SIDE_STOCKS_COM`, deux millésimes |
-| Créations d'entreprises annuelles | Total entreprises créées | `DS_SIDE_CREA_ENT_COM` (ACTIVITY=`_T`, LEGAL_FORM=`_T`, SIDE_MEASURE=`BURE`, TIME_PERIOD=2024) |
+| Créations d'entreprises annuelles | Total entreprises créées | `DS_SIDE_CREA_ENT_COM` (ACTIVITY=`_T`, LEGAL_FORM=`_T`, SIDE_MEASURE=`BURE`, TIME_PERIOD=2025) |
 | Profil sectoriel A10 (hors agriculture) | 9 parts sectorielles normalisées | `DS_SIDE_STOCKS_COM` (ACTIVITY ∈ {BE, FZ, GI, JZ, KZ, LZ, MN, OQ, RU} ; secteur AZ non publié à la maille communale) |
 | Position vs comparables | (cible − médiane) / médiane | calculé localement |
 | Couverture sectorielle | Σ A10 publiés / stock(_T) | calculé localement |

@@ -61,7 +61,7 @@ export const SECTOR_DETAILS = {
 
 export const STOCK_YEAR = '2024';
 export const STOCK_BASELINE_YEAR = '2014';
-const CREA_YEAR = '2024';
+const CREA_YEAR = '2025';
 const POP_YEAR = '2023';
 
 // Millésimes servis par ce build. `js/app.js` compare cette chaîne à celle
@@ -69,6 +69,16 @@ const POP_YEAR = '2023';
 // millésime antérieur et doivent être remplacées. Sans ce contrôle, un
 // visiteur déjà venu garde ses anciens chiffres sous les nouveaux libellés.
 export const DATA_VERSION = `${POP_YEAR}-${STOCK_BASELINE_YEAR}-${STOCK_YEAR}-${CREA_YEAR}`;
+
+// Année d'observation retenue dans chaque jeu de données. Exporté pour que
+// `scripts/check-datasets.mjs` puisse la confronter à la dernière année
+// réellement publiée : l'identifiant du produit ne suffit pas à la détecter,
+// une nouvelle observation pouvant paraître dans un fichier au nom inchangé.
+export const OBSERVATION_YEARS = {
+  populations: POP_YEAR,
+  stocks: STOCK_YEAR,
+  creations: CREA_YEAR
+};
 
 const KEEP_LEVELS = new Set(['COM', 'ARM']);
 

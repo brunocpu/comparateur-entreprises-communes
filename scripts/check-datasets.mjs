@@ -21,7 +21,7 @@
 //
 // Usage : node scripts/check-datasets.mjs
 
-import { PRODUCTS } from '../js/insee-api.js';
+import { PRODUCTS, OBSERVATION_YEARS, STOCK_BASELINE_YEAR } from '../js/insee-api.js';
 
 const CATALOG_URL = 'https://api.insee.fr/melodi/catalog/all';
 const FILE_BASE = 'https://api.insee.fr/melodi/file';
@@ -38,6 +38,12 @@ function fail(kind, msg) { lines.push(`  ${kind}  ${msg}`); problems.push(`[${ki
 // Millésime = année en suffixe de l'identifiant produit (…_2024_CSV_FR).
 function millesimeOf(productId) {
   const m = /_(\d{4})_CSV_FR$/.exec(productId);
+  return m ? Number(m[1]) : null;
+}
+
+// Année d'un horodatage de catalogue (« 2025-01-01T00:00:00 » → 2025).
+function anneeDe(horodatage) {
+  const m = /^(\d{4})/.exec(String(horodatage || ''));
   return m ? Number(m[1]) : null;
 }
 
@@ -106,6 +112,26 @@ for (const [key, { ds, product }] of Object.entries(PRODUCTS)) {
     ok(`millésime ${pinned} à jour`);
   }
 
+  // Le millésime ci-dessus porte sur le contenant. Le catalogue expose aussi la
+  // plage réellement couverte : une observation plus récente peut paraître sans
+  // que le nom du fichier change. Le produit créations s'appelle « _2025_CSV_FR »
+  // depuis sa publication, alors que sa dernière année a passé de 2024 à 2025.
+  const lue = OBSERVATION_YEARS[key];
+  const derniere = anneeDe(entry.temporal?.endPeriod);
+  const premiere = anneeDe(entry.temporal?.startPeriod);
+  if (lue && derniere) {
+    if (derniere > Number(lue)) {
+      fail('ANNEE', `observation ${derniere} publiée, l'app lit ${lue} (js/insee-api.js).`);
+    } else if (derniere < Number(lue)) {
+      fail('ANNEE', `l'app lit ${lue}, absent du jeu qui s'arrête en ${derniere}.`);
+    } else {
+      ok(`dernière observation ${derniere}, celle que lit l'app`);
+    }
+  }
+  if (key === 'stocks' && premiere && Number(STOCK_BASELINE_YEAR) < premiere) {
+    fail('ANNEE', `année de référence ${STOCK_BASELINE_YEAR} antérieure au début de série (${premiere}).`);
+  }
+
   lines.push('');
 }
 
@@ -123,7 +149,7 @@ console.log(lines.join('\n'));
 if (problems.length) {
   console.error(`\n✗ ${problems.length} anomalie(s) :`);
   problems.forEach(p => console.error('  - ' + p));
-  console.error('\nCorriger les identifiants dans js/insee-api.js, puis régénérer'
+  console.error('\nCorriger les identifiants ou les années dans js/insee-api.js, puis régénérer'
     + " l'artefact avec `npm run build:data`.");
   process.exit(1);
 }
