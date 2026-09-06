@@ -172,6 +172,14 @@ async function doPull(refresh) {
     showSearch();
   } catch (err) {
     console.error(err);
+    // Les données en cache ont survécu — la purge n'a lieu qu'après un pull
+    // réussi. On rétablit donc la vue avant d'afficher l'erreur : sans cela
+    // l'utilisateur reste sur l'écran de démarrage et doit recharger la page
+    // pour retrouver des données qui n'ont jamais quitté IndexedDB.
+    if (await cache.isReady()) {
+      await loadFromCache();
+      showSearch();
+    }
     ui.showError(`Le chargement a échoué : ${err.message}. Réessayer plus tard.`);
   } finally {
     btnPull.disabled = false;

@@ -60,7 +60,7 @@ export const SECTOR_DETAILS = {
 };
 
 export const STOCK_YEAR = '2024';
-const STOCK_BASELINE_YEAR = '2014';
+export const STOCK_BASELINE_YEAR = '2014';
 const CREA_YEAR = '2024';
 const POP_YEAR = '2023';
 
