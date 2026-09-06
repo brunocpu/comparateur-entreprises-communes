@@ -1,0 +1,23 @@
+name: Watch Insee datasets
+
+# Sonde hebdomadaire des sources de données (Insee Melodi + geo.api.gouv.fr).
+# Échoue si un jeu de données a été renommé ou retiré, si une URL de
+# téléchargement ne répond plus, ou si un millésime plus récent est publié.
+# Un échec passe le workflow au rouge → notification GitHub par courriel
+# (Settings → Notifications → Actions).
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'   # tous les lundis 06:00 UTC
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Sonde catalogue Insee
+        run: node scripts/check-datasets.mjs

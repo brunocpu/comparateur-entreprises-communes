@@ -189,7 +189,7 @@ function setIndicator(key, value, delta, suffix) {
 const BULLET_LABELS = {
   stock:   { noun: 'entreprises actives',         fmt: fmtInt },
   density: { noun: 'entreprises pour 1 000 hab.', fmt: fmtDec1 },
-  growth:  { noun: 'croissance 2014→2023',        fmt: fmtPct },
+  growth:  { noun: 'croissance 2014→2024',        fmt: fmtPct },
   crea:    { noun: 'créations par an',            fmt: fmtInt }
 };
 function renderBullet(key, target, stat) {

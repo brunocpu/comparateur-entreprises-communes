@@ -11,7 +11,7 @@ Deux modes d'usage :
 
 Les données Insee sur la démographie d'entreprises (fichier Side, populations légales) sont riches mais dispersées : trois jeux à rapprocher, plusieurs millésimes, une nomenclature sectorielle agrégée, des règles de secret statistique à respecter. Pour un usage ponctuel — positionner rapidement une commune par rapport à des comparables crédibles — la barre d'entrée est disproportionnée.
 
-Cet outil rend l'exercice immédiat. À partir d'une commune cible, il sélectionne automatiquement dix communes comparables sur taille démographique (±25 %) et proximité de profil sectoriel A10, et restitue le positionnement de la cible sur quatre indicateurs : entreprises actives, densité pour 1 000 habitants, croissance 2014→2023, créations annuelles. Le mode « plusieurs communes » permet une comparaison libre, sans contrainte de strate, pour confronter des voisines ou des profils contrastés.
+Cet outil rend l'exercice immédiat. À partir d'une commune cible, il sélectionne automatiquement dix communes comparables sur taille démographique (±25 %) et proximité de profil sectoriel A10, et restitue le positionnement de la cible sur quatre indicateurs : entreprises actives, densité pour 1 000 habitants, croissance 2014→2024, créations annuelles. Le mode « plusieurs communes » permet une comparaison libre, sans contrainte de strate, pour confronter des voisines ou des profils contrastés.
 
 Public cible naturel : développeurs économiques de collectivités, agences de développement économique, chargés de mission en agences d'urbanisme, étudiants et chercheurs en économie territoriale, ainsi que toute personne ayant besoin d'objectiver une comparaison communale sur des indicateurs économiques de base.
 
@@ -22,7 +22,7 @@ Public cible naturel : développeurs économiques de collectivités, agences de 
 ### Onglet « Une commune »
 
 - Autocomplete sur 34 002 communes (par nom ou code Insee), reconnaissance des accents.
-- 4 indicateurs cardinaux : **Entreprises actives**, **Entreprises pour 1 000 habitants**, **Croissance 2014→2023**, **Créations d'entreprises annuelles**.
+- 4 indicateurs cardinaux : **Entreprises actives**, **Entreprises pour 1 000 habitants**, **Croissance 2014→2024**, **Créations d'entreprises annuelles**.
 - Sous chaque chiffre : un **bullet chart** SVG montrant Q1—Q3 des comparables + médiane + position de la cible.
 - Profil sectoriel A10 hors agriculture (9 secteurs publiés à l'échelle communale par l'Insee) en barres horizontales, marqueur médian rouille distinct.
 - Tableau des comparables avec **bar-in-cell** (barre de fond proportionnelle dans chaque cellule numérique) et lignes Q1 / médiane / Q3 en pied de tableau.
@@ -79,16 +79,18 @@ Puis ouvrir <http://localhost:8000>.
 
 ### Premier lancement
 
-Chemin par défaut : l'app récupère un **artefact pré-bundlé** `data/communes-2023.json` (~12 MB JSON brut, **~2,3 MB sur le wire** après gzip) hébergé sur GitHub Pages, puis l'indexe en IndexedDB. Compter **~3 à 5 s en Wi-Fi**.
+Chemin par défaut : l'app récupère un **artefact pré-bundlé** `data/communes-2024.json` (~12 MB JSON brut, **~2,3 MB sur le wire** après gzip) hébergé sur GitHub Pages, puis l'indexe en IndexedDB. Compter **~3 à 5 s en Wi-Fi**.
 
 Cet artefact est régénéré annuellement par le workflow GitHub Actions `.github/workflows/build-data.yml` (cron 15 novembre, ou déclenchement manuel) qui exécute `scripts/build-data.mjs` — le même pipeline que le téléchargement complet, mais côté CI.
 
-Chemin de secours : si l'artefact est indisponible (404, première mise en place, etc.), l'app affiche un bouton « Lancer le chargement » qui exécute un téléchargement complet depuis l'API Insee Melodi. Ce chemin télécharge **~67 MB de ZIP CSV** (1 à 2 min en Wi-Fi) :
+Les sources sont par ailleurs contrôlées chaque lundi par `.github/workflows/datasets-watch.yml`, qui exécute `scripts/check-datasets.mjs` (`npm run check:datasets` en local). La sonde confronte les identifiants épinglés dans `js/insee-api.js` au catalogue Melodi et échoue — donc notifie — si un jeu de données a été renommé ou retiré, si une URL de téléchargement ne répond plus, ou si un millésime plus récent est publié. Elle a été ajoutée après le renommage de `DS_SIDE_STOCKS_UL_COM` en `DS_SIDE_STOCKS_COM` (juillet 2026).
+
+Chemin de secours : si l'artefact est indisponible (404, première mise en place, etc.), l'app affiche un bouton « Lancer le chargement » qui exécute un téléchargement complet depuis l'API Insee Melodi. Ce chemin télécharge **~80 MB de ZIP CSV** (1 à 2 min en Wi-Fi) :
 
 | Dataset | ZIP | CSV décompressé |
 |---|---|---|
 | `DS_POPULATIONS_REFERENCE` | ~0.9 MB | 3.5 MB |
-| `DS_SIDE_STOCKS_UL_COM` | ~22 MB | ~184 MB |
+| `DS_SIDE_STOCKS_COM` | ~35 MB | ~451 MB |
 | `DS_SIDE_CREA_ENT_COM` | ~44 MB | ~250 MB |
 
 Extraction streaming via `DecompressionStream('deflate-raw')` natif, filtrage à la volée → seuls ~5 MB persistent en IndexedDB.
@@ -121,11 +123,11 @@ Pré-requis : **Node ≥ 18** (utilise `fetch`, `DecompressionStream` et `TextDe
 
 | Indicateur | Formule | Source Insee |
 |---|---|---|
-| Entreprises actives | Total unités légales actives | `DS_SIDE_STOCKS_UL_COM` (ACTIVITY=`_T`, SIDE_MEASURE=`LEGAL_UNIT`, TIME_PERIOD=2023) |
+| Entreprises actives | Total unités légales actives | `DS_SIDE_STOCKS_COM` (ACTIVITY=`_T`, SIDE_MEASURE=`LEGAL_UNIT`, TIME_PERIOD=2024) |
 | Entreprises pour 1 000 habitants | UL × 1 000 / population municipale | + `DS_POPULATIONS_REFERENCE` (POPREF_MEASURE=`PMUN`) |
-| Croissance 2014→2023 | (UL_2023 − UL_2014) / UL_2014 | `DS_SIDE_STOCKS_UL_COM`, deux millésimes |
+| Croissance 2014→2024 | (UL_2024 − UL_2014) / UL_2014 | `DS_SIDE_STOCKS_COM`, deux millésimes |
 | Créations d'entreprises annuelles | Total entreprises créées | `DS_SIDE_CREA_ENT_COM` (ACTIVITY=`_T`, LEGAL_FORM=`_T`, SIDE_MEASURE=`BURE`, TIME_PERIOD=2024) |
-| Profil sectoriel A10 (hors agriculture) | 9 parts sectorielles normalisées | `DS_SIDE_STOCKS_UL_COM` (ACTIVITY ∈ {BE, FZ, GI, JZ, KZ, LZ, MN, OQ, RU} ; secteur AZ non publié à la maille communale) |
+| Profil sectoriel A10 (hors agriculture) | 9 parts sectorielles normalisées | `DS_SIDE_STOCKS_COM` (ACTIVITY ∈ {BE, FZ, GI, JZ, KZ, LZ, MN, OQ, RU} ; secteur AZ non publié à la maille communale) |
 | Position vs comparables | (cible − médiane) / médiane | calculé localement |
 | Couverture sectorielle | Σ A10 publiés / stock(_T) | calculé localement |
 | Quartiles Q1 / Q3 | quantiles empiriques sur la sélection | calculé localement |
@@ -143,15 +145,17 @@ test-pull.mjs           harness de test bout-en-bout
 LICENSE                 MIT
 README.md               ce fichier
 data/
-  communes-2023.json    artefact pré-bundlé (~12 MB brut, ~2,3 MB gzip),
+  communes-2024.json    artefact pré-bundlé (~12 MB brut, ~2,3 MB gzip),
                         régénéré annuellement par GH Action
 docs/
   SPEC-V2-historique.md spec implémentée, conservée pour traçabilité
 scripts/
   build-data.mjs        exécute pullAll côté Node et écrit data/*.json
+  check-datasets.mjs    sonde de disponibilité des sources Insee
 .github/workflows/
   pages.yml             déploiement automatique sur GitHub Pages
   build-data.yml        régénération annuelle de l'artefact (cron)
+  datasets-watch.yml    sonde hebdomadaire des sources Insee (cron)
 css/styles.css          mobile-first, sans framework
                         (Fraunces + Geist via Google Fonts)
 assets/icon.svg
@@ -223,7 +227,7 @@ Non couverts par l'audit automatique : tests utilisateurs NVDA / VoiceOver, navi
 - Population « 2023 » = millésime légal au 1<sup>er</sup> janvier 2026, construit à partir des enquêtes du recensement 2018-2022.
 - Les unités légales sont rattachées à leur commune d'**implantation administrative** (siège social), pas à leur lieu d'activité opérationnelle. Effet « Paris / La Défense » : les communes-sièges sur-représentées vs les communes résidentielles sous-représentées.
 - Créations 2024 incluent les **micro-entrepreneurs**.
-- Croissance 2014→2023 traverse plusieurs évolutions méthodologiques Insee (refonte du répertoire des entreprises, généralisation du statut de micro-entrepreneur). Comparabilité dans le temps affectée.
+- Croissance 2014→2024 traverse plusieurs évolutions méthodologiques Insee (refonte du répertoire des entreprises, généralisation du statut de micro-entrepreneur). Comparabilité dans le temps affectée.
 - **Pas d'effectifs salariés à la maille communale** (non publiés par l'Insee).
 - Profil sectoriel volontairement large (9 secteurs A10, agriculture exclue à la maille communale par l'Insee). Sur les petites communes, certaines cellules sectorielles sont occultées au titre du secret statistique.
 - Arrondissements municipaux de Paris / Lyon / Marseille traités séparément (codes Insee dédiés, niveau ARM).

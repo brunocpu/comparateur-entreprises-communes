@@ -1,6 +1,6 @@
 name: Refresh bundled data
 
-# Régénère data/communes-2023.json depuis l'API Insee Melodi.
+# Régénère data/communes-2024.json depuis l'API Insee Melodi.
 # - Cron annuel autour de la publication Insee Side (novembre).
 # - Manual trigger via l'onglet Actions (workflow_dispatch).
 # Si le contenu a changé : commit + push, ce qui déclenche le workflow Pages.

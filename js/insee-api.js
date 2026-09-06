@@ -11,7 +11,7 @@
 //   - Full ZIP CSV:     GET /melodi/file/{DS_NAME}/{PRODUCT_ID}_CSV_FR
 //     ZIP contains {DS}_NNNN_data.csv and {DS}_NNNN_metadata.csv (deflate, standard ZIP).
 //
-// Response sizes (observed): pop = 0.9 MB, stocks = 22 MB, créations = 44 MB.
+// Response sizes (observed): pop = 0.9 MB, stocks = 35 MB, créations = 44 MB.
 // CORS headers reflect Origin (verified for Melodi + geo.api.gouv.fr).
 
 import { streamCsvFromZip } from './zip-csv.js';
@@ -20,9 +20,11 @@ const MELODI_FILE = 'https://api.insee.fr/melodi/file';
 const GEO_BASE = 'https://geo.api.gouv.fr';
 
 // Melodi product identifiers for the CSV ZIPs (from /catalog/{DS} → product[].accessURL).
-const PRODUCTS = {
+// Exporté : `scripts/check-datasets.mjs` confronte ces identifiants épinglés au
+// catalogue Insee chaque semaine, pour que la sonde ne puisse pas diverger du code.
+export const PRODUCTS = {
   populations: { ds: 'DS_POPULATIONS_REFERENCE',  product: 'DS_POPULATIONS_REFERENCE_2023_CSV_FR',  data: /POPULATIONS_REFERENCE.*_data\.csv$/ },
-  stocks:      { ds: 'DS_SIDE_STOCKS_UL_COM',      product: 'DS_SIDE_STOCKS_UL_COM_2023_CSV_FR',     data: /STOCKS_UL_COM.*_data\.csv$/ },
+  stocks:      { ds: 'DS_SIDE_STOCKS_COM',         product: 'DS_SIDE_STOCKS_COM_2024_CSV_FR',        data: /STOCKS_COM.*_data\.csv$/ },
   creations:   { ds: 'DS_SIDE_CREA_ENT_COM',       product: 'DS_SIDE_CREA_ENT_COM_2025_CSV_FR',      data: /CREA_ENT_COM.*_data\.csv$/ }
 };
 
@@ -57,7 +59,7 @@ export const SECTOR_DETAILS = {
   RU: 'R Arts, spectacles, activités récréatives · S Autres services (associations, réparation, services personnels) · T Ménages employeurs · U Activités extra-territoriales'
 };
 
-const STOCK_YEAR = '2023';
+const STOCK_YEAR = '2024';
 const STOCK_BASELINE_YEAR = '2014';
 const CREA_YEAR = '2024';
 const POP_YEAR = '2023';
@@ -317,8 +319,9 @@ async function pullPopulations(ctx, signal, progress) {
 // ---------- 3. Stocks UL + sector profile (single CSV) ----------
 
 async function pullStocksAndSectors(ctx, signal, progress) {
-  // The DS_SIDE_STOCKS_UL_COM CSV contains all years, all activities, all geo
-  // levels. We extract: TIME_PERIOD ∈ {2014, 2023} × ACTIVITY ∈ {_T, A10} × COM/ARM.
+  // The DS_SIDE_STOCKS_COM CSV contains all years (2014-2024), both measures
+  // (LEGAL_UNIT / UNIT_LOC), all activities and all geo levels. We extract:
+  // SIDE_MEASURE = LEGAL_UNIT × TIME_PERIOD ∈ {2014, 2024} × ACTIVITY ∈ {_T, A10} × COM/ARM.
   const { buffer, dataPattern, friendly } = await downloadAndStream('stocks', signal, progress, 0.4);
   progress(0.4, `Lecture du fichier — ${friendly}…`);
 
@@ -347,7 +350,7 @@ async function pullStocksAndSectors(ctx, signal, progress) {
         c.sectoriel[act] = v;
       }
     },
-    onProgress: n => progress(0.4 + 0.6 * Math.min(1, n / 3_700_000), `Lecture — entreprises actives & secteurs (${n.toLocaleString('fr-FR')} lignes traitées)`)
+    onProgress: n => progress(0.4 + 0.6 * Math.min(1, n / 9_200_000), `Lecture — entreprises actives & secteurs (${n.toLocaleString('fr-FR')} lignes traitées)`)
   });
 }
 
