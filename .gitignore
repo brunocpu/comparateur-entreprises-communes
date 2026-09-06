@@ -34,3 +34,6 @@ yarn-error.log*
 # Cache de polices décompressées par scripts/build-og-image.mjs
 assets/fonts-cache/
 
+# Outils de session Claude Code (recettes locales, instructions projet)
+.claude/
+CLAUDE.md
