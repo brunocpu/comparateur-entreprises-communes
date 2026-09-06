@@ -55,7 +55,7 @@
       étudiants et chercheurs en économie territoriale.
     </p>
     <p class="subtitle">
-      Indicateurs : entreprises actives, densité pour 1 000 habitants, croissance
+      Indicateurs : entreprises actives (hors agriculture), densité pour 1 000 habitants, croissance
       2014→2024, créations annuelles, profil sectoriel A10.
     </p>
     <p class="header-meta" id="header-meta" hidden>
@@ -181,6 +181,8 @@
         </div>
       </div>
 
+      <p class="muted small">Entreprises actives : unités légales du répertoire Insee, hors agriculture.</p>
+
       <p id="theoretical-gap" class="muted small"></p>
     </article>
 
@@ -246,6 +248,8 @@
 
     <div id="multi-chips" class="commune-chips" aria-live="polite"></div>
 
+    <p id="multi-note" class="muted small" hidden>Entreprises actives : unités légales du répertoire Insee, hors agriculture.</p>
+
     <div id="multi-table-wrap" class="table-wrap" hidden>
       <table id="multi-table">
         <thead>
@@ -301,9 +305,8 @@
         <p>
           <strong>Périmètre des communes comparables.</strong> La sélection s'opère en deux étapes. Un
           premier filtre retient les communes dont la population municipale appartient à la bande
-          [cible / 1,25 ; cible × 1,25]. Sont également écartées les communes dont la couverture
-          sectorielle publiée par l'Insee est inférieure à 95 % (cellules sectorielles occultées au
-          titre du secret statistique : profil trop lacunaire pour porter une comparaison). Les
+          [cible / 1,25 ; cible × 1,25]. Sont également écartées les communes sans unité légale
+          active, pour lesquelles le profil sectoriel n'est pas défini : 59 sur 34 002 au millésime 2024. Les
           communes restantes sont ensuite classées par un score composite qui combine, par ordre
           décroissant de pondération : la similarité du profil sectoriel (composante principale),
           l'écart relatif de taille démographique (composante secondaire) et, en mode « Autour de la
@@ -312,7 +315,11 @@
           constituent la sélection de référence.
         </p>
         <p>
-          <strong>Portée des indicateurs.</strong> Les unités légales sont rattachées à leur commune
+          <strong>Portée des indicateurs.</strong> Les entreprises dénombrées sont des <em>unités légales</em>
+          au sens du répertoire Insee des entreprises : une société détenant plusieurs filiales domiciliées
+          dans la commune y est comptée autant de fois. Le champ couvre les neuf secteurs de la nomenclature
+          agrégée A10 diffusés à l'échelle communale et exclut l'agriculture. Les unités légales sont
+          rattachées à leur commune
           d'implantation administrative, c'est-à-dire à l'adresse d'enregistrement officielle de
           chaque unité dans le répertoire Insee des entreprises. Cette information ne préjuge pas
           de la localisation effective de l'activité
@@ -327,15 +334,17 @@
         <p>
           <strong>Millésimes et nomenclatures.</strong> La population correspond au millésime légal au
           1<sup>er</sup> janvier 2026, établi à partir des enquêtes annuelles du recensement
-          2018-2022 (millésime « 2023 »). L'évolution du nombre d'entreprises actives est mesurée entre 2014
+          2018-2022 (millésime « 2023 »). La densité rapporte un effectif d'entreprises constaté en
+          2024 à une population établie sur des enquêtes antérieures. L'écart de millésime est plus sensible
+          pour les communes dont la population a fortement varié depuis. L'évolution du nombre d'entreprises actives est mesurée entre 2014
           et 2024 ; la période traverse plusieurs évolutions méthodologiques de la statistique
           d'entreprises (refonte du répertoire Insee des entreprises, généralisation du statut de
           micro-entrepreneur) susceptibles d'affecter la comparabilité dans le temps. Les créations
           2025 relèvent du périmètre Side et incluent les micro-entrepreneurs. Le profil sectoriel
           s'appuie sur la
-          nomenclature agrégée A10 hors agriculture (9 secteurs ; le secteur agricole AZ n'est pas
-          publié à la maille communale par l'Insee). Pour les communes de faible effectif, certaines
-          cellules sectorielles sont occultées au titre du secret statistique.
+          nomenclature agrégée A10 hors agriculture (9 secteurs diffusés à l'échelle communale). Ces neuf
+          secteurs sont renseignés pour l'ensemble des communes : leur somme correspond au total des
+          unités légales actives.
         </p>
       </details>
     </div>
