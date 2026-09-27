@@ -1,5 +1,5 @@
 import { A10_SECTORS, SECTOR_LABELS, SECTOR_DETAILS, STOCK_BASELINE_YEAR, STOCK_YEAR } from './insee-api.js';
-import { fmtInt, fmtDec1, fmtPct, fmtPctSigned, fmtDeltaVsMedian, fmtPointsVsMedian, fmtCommunesComparables, scopeLabel } from './format.js';
+import { fmtInt, fmtDec1, fmtPct, fmtDeltaVsMedian, fmtPointsVsMedian, fmtCommunesComparables, scopeLabel } from './format.js';
 import { escapeHtml } from './util.js';
 import { N_RECOMMENDED, COVERAGE_FLOOR } from './matching.js';
 
@@ -148,20 +148,6 @@ export function renderTarget(target, summary) {
   renderBullet('density', target.density,    summary.summary.density);
   renderBullet('growth',  target.growth10y,  summary.summary.growth10y);
   renderBullet('crea',    target.creations,  summary.summary.creations);
-
-  // Écart de densité d'entreprises exprimé en pourcentage par rapport à la
-  // médiane des comparables — sans conversion en nombre absolu d'entreprises
-  // (la médiane porte sur 10 voisins choisis par similarité, pas sur une norme).
-  const gapEl = document.getElementById('theoretical-gap');
-  const dDelta = summary.delta.density;
-  if (dDelta == null) {
-    gapEl.textContent = '';
-  } else if (dDelta !== 0) {
-    gapEl.textContent =
-      `Nombre d'entreprises pour 1 000 habitants : ${fmtPctSigned(dDelta)} par rapport à la médiane des communes comparables.`;
-  } else {
-    gapEl.textContent = `Nombre d'entreprises pour 1 000 habitants aligné sur la médiane des comparables.`;
-  }
 }
 
 function setIndicator(key, value, delta, fmtDelta) {

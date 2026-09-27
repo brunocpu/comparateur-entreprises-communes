@@ -18,7 +18,7 @@ import {
   summarizeComparables, countInRadius, findComparables
 } from '../js/matching.js';
 import { parseCsvLine, headerIndex } from '../js/zip-csv.js';
-import { fmtInt, fmtDec1, fmtPct, fmtPctSigned } from '../js/format.js';
+import { fmtInt, fmtDec1, fmtPct } from '../js/format.js';
 import { normalize, escapeHtml } from '../js/util.js';
 // Import en espace de noms : une fonction absente fait échouer son test, pas le fichier.
 import * as csv from '../js/export.js';
@@ -125,8 +125,6 @@ describe('format', () => {
   test('fmtInt Infinity → tiret', () => assert.equal(fmtInt(Infinity), '—'));
   test('fmtDec1 garde une décimale', () => assert.match(fmtDec1(3.14), /^3,1$/));
   test('fmtPct convertit ratio en %', () => assert.match(fmtPct(0.42), /42.%$/));
-  test('fmtPctSigned positif explicite le +', () => assert.ok(fmtPctSigned(0.5).includes('+')));
-  test('fmtPctSigned null → tiret', () => assert.equal(fmtPctSigned(null), '—'));
 });
 
 // ---------- normalize ----------

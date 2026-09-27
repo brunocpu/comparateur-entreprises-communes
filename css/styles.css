@@ -824,11 +824,6 @@ button { font-family: inherit; }
   margin: 0 0 var(--space-1);
   font-size: clamp(1.4rem, 2.8vw, 1.9rem);
 }
-#theoretical-gap {
-  margin: var(--space-3) 0 0;
-  padding-top: var(--space-3);
-  font-size: 0.92rem;
-}
 
 .indicators {
   display: grid;
@@ -924,18 +919,6 @@ button { font-family: inherit; }
 .indicator-bullet:empty { display: none; }
 .delta-pos { color: var(--positive); }
 .delta-neg { color: var(--negative); }
-
-#theoretical-gap {
-  font-style: italic;
-  font-family: var(--font-display);
-  font-variation-settings: "opsz" 14;
-  font-size: 0.98rem;
-  color: var(--ink-muted);
-  margin: var(--space-5) 0 0;
-  padding-top: var(--space-4);
-  border-top: 1px dashed var(--rule);
-  max-width: 70ch;
-}
 
 /* ----------------------------------------------------------------------------
    Sector chart — slim bars with rust median pin
@@ -1271,7 +1254,7 @@ table .ac-code {
   .app-header, #bootstrap, #errors, #tabs,
   #search, #search-summary, .sticky-banner,
   .row, .autocomplete, #btn-show-all,
-  #sector-note, .comparables-warning, #theoretical-gap,
+  #sector-note, .comparables-warning,
   /* Paragraphes intros des cards (sauf #target-meta) */
   .card > p:not(#target-meta),
   /* Bullets hidden : trop verticaux pour 1 page A4 paysage */

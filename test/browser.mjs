@@ -269,7 +269,8 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.equal(norm(await text('#sticky-scope')), zone);
     assert.equal(norm(await text('#comparables-h2')), `Communes comparables — ${zone} · n = 1`);
     assert.match(norm(await text('#target-meta')), /n = 1 commune comparable$/);
-    assert.match(norm(await text('#theoretical-gap')), /^Nombre d'entreprises pour 1 000 habitants : [-−]13,4 % par rapport/);
+    // L'écart de densité s'affiche une seule fois, sous l'indicateur.
+    assert.equal(await evaluate(`!!document.getElementById('theoretical-gap')`), false);
   });
 
   test('S16 accessibilité : barres sectorielles exposées comme images nommées', async () => {
