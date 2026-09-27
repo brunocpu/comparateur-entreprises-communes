@@ -1,6 +1,7 @@
 import { A10_SECTORS, SECTOR_LABELS, SECTOR_DETAILS, STOCK_BASELINE_YEAR, STOCK_YEAR } from './insee-api.js';
 import { fmtInt, fmtDec1, fmtPct, fmtPctSigned, fmtDeltaVsMedian, fmtPointsVsMedian, fmtCommunesComparables, scopeLabel } from './format.js';
 import { escapeHtml } from './util.js';
+import { N_RECOMMENDED, COVERAGE_FLOOR } from './matching.js';
 
 // Respect du paramètre système « réduire les animations » (RGAA 13.x).
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -82,7 +83,7 @@ export function setupAutocomplete(input, listEl, getItems, onPick) {
     listEl.innerHTML = '';
     items.forEach((it, i) => {
       const li = document.createElement('li');
-      li.id = `ac-opt-${i}`;
+      li.id = `${listEl.id}-opt-${i}`;
       li.setAttribute('role', 'option');
       if (i === active) {
         li.setAttribute('aria-selected', 'true');
@@ -288,7 +289,7 @@ export function renderSectorChart(target, medianShares, opts = {}) {
           ${m != null ? `<span class="muted">médiane ${fmtPct(m)}</span>` : ''}
         </span>
       </div>
-      <div class="sector-bars" aria-label="part sectorielle ${SECTOR_LABELS[code]} : cible ${fmtPct(t)}, médiane ${m != null ? fmtPct(m) : 'non disponible'}">
+      <div class="sector-bars" role="img" aria-label="part sectorielle ${SECTOR_LABELS[code]} : cible ${fmtPct(t)}, médiane ${m != null ? fmtPct(m) : 'non disponible'}">
         <div class="sector-bar-target" style="width:${tWidth.toFixed(1)}%"></div>
         ${mWidth != null ? `<div class="sector-bar-median" style="left:${mWidth.toFixed(1)}%"></div>` : ''}
       </div>
@@ -306,7 +307,7 @@ export function renderSectorChart(target, medianShares, opts = {}) {
   // pour préserver l'anonymat des entreprises (faibles effectifs).
   const note = document.getElementById('sector-note');
   if (note) {
-    if (coverage != null && coverage < 0.85) {
+    if (coverage != null && coverage < COVERAGE_FLOOR) {
       note.hidden = false;
       note.textContent =
         `Répartition sectorielle partielle : seulement ${(coverage * 100).toFixed(0)} % du total est ventilé par secteur. ` +
@@ -407,11 +408,6 @@ export function setProgress(ratio, label) {
     eta = lastEtaLabel;
   }
   document.getElementById('progress-label').textContent = label + eta;
-}
-
-export function hideProgress() {
-  document.getElementById('progress').hidden = true;
-  progressStart = 0;
 }
 
 export function showError(msg, title = 'Comparaison indisponible') {
@@ -611,7 +607,7 @@ export function setRayonCount(n) {
 export function renderLimitedPanelWarning(n, scope, regionsByCode, deptsByCode) {
   const el = document.getElementById('comparables-warning');
   if (!el) return;
-  if (n >= 5) {
+  if (n >= N_RECOMMENDED) {
     el.hidden = true;
     el.textContent = '';
     return;
@@ -633,7 +629,7 @@ export function renderLimitedPanelWarning(n, scope, regionsByCode, deptsByCode) 
   el.hidden = false;
   el.innerHTML =
     `<strong>Sélection limitée — ${fmtCommunesComparables(n)}.</strong> ` +
-    `En dessous de 5 communes comparables, les écarts à la médiane peuvent être influencés ` +
+    `En dessous de ${N_RECOMMENDED} communes comparables, les écarts à la médiane peuvent être influencés ` +
     `par un seul cas atypique. À interpréter avec prudence. ${suggestion}`;
 }
 
@@ -659,19 +655,12 @@ export function renderScopeBadge(scope, target, n, regionsByCode, deptsByCode) {
   }
 }
 
-export function setStaleResults(stale) {
-  document.querySelectorAll('#results .card').forEach(card => {
-    if (stale) card.classList.add('is-stale');
-    else card.classList.remove('is-stale');
-  });
-}
-
 // Sticky banner : prend le relais du bloc de recherche ou de la barre
 // récapitulative — l'un ou l'autre est affiché — quand celui-ci sort de
 // l'écran, et seulement si des résultats sont visibles. Un élément masqué
-// (`hidden`) n'intersecte jamais : suivre le seul bloc de recherche, replié
-// après chaque analyse, affichait le bandeau en haut de page, en doublon de
-// la barre récapitulative. Affiche cible + zone + lien « Changer ↑ ».
+// (`hidden`) n'intersecte jamais : le bloc de recherche, replié après chaque
+// analyse, ne peut donc pas servir seul de repère. Affiche cible + zone +
+// lien « Changer ↑ ».
 let stickyObserver = null;
 export function setupStickyBanner({ onChange } = {}) {
   const banner = document.getElementById('sticky-banner');

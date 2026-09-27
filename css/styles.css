@@ -122,9 +122,6 @@ button { font-family: inherit; }
 }
 .tooltip[hidden] { display: none; }
 
-/* Anciens éléments décoratifs supprimés */
-.app-stripe { display: none; }
-
 /* ----------------------------------------------------------------------------
    Tabs : Une commune | Plusieurs communes — au-dessus de la card recherche.
 ---------------------------------------------------------------------------- */
@@ -223,11 +220,6 @@ button { font-family: inherit; }
 .chip-remove:hover {
   background: var(--negative);
   color: var(--surface);
-}
-#custom-empty {
-  padding: var(--space-4) 0;
-  text-align: center;
-  font-style: italic;
 }
 
 /* ----------------------------------------------------------------------------
@@ -499,11 +491,6 @@ button { font-family: inherit; }
   border-radius: var(--radius);
   padding: var(--space-5);
   margin: var(--space-4) 0;
-}
-.card.is-stale {
-  opacity: 0.42;
-  pointer-events: none;
-  transition: opacity 240ms ease;
 }
 .card h2 {
   font-family: var(--font-display);
@@ -1281,17 +1268,29 @@ table .ac-code {
   }
 
   /* Tout cacher sauf les résultats (single) ou la table multi */
-  .app-header, .app-footer, #bootstrap, #errors, #tabs,
+  .app-header, #bootstrap, #errors, #tabs,
   #search, #search-summary, .sticky-banner,
   .row, .autocomplete, #btn-show-all,
   #sector-note, .comparables-warning, #theoretical-gap,
-  #custom-compare-card,
   /* Paragraphes intros des cards (sauf #target-meta) */
   .card > p:not(#target-meta),
   /* Bullets hidden : trop verticaux pour 1 page A4 paysage */
   .indicator-bullet,
-  /* État stale écran-only */
-  .card.is-stale { display: none !important; }
+  /* Note méthodologique : trop longue pour la page ; le pied de page garde
+     la source, la licence et les millésimes, que la Licence Ouverte demande
+     de mentionner en cas de réutilisation. */
+  .app-footer .methodo { display: none !important; }
+
+  .app-footer {
+    margin: 0.15cm 0 0 !important;
+    padding: 0 !important;
+    background: none !important;
+    border: none !important;
+    font-size: 5.5pt !important;
+    color: #444 !important;
+  }
+  .app-footer p { margin: 0 !important; max-width: none !important; }
+  .app-footer a { color: inherit !important; text-decoration: none !important; }
 
   /* Mode multi — masquer les éléments d'édition mais garder chips + tableau */
   #panel-multi #search-multi > p:first-child,
@@ -1317,7 +1316,6 @@ table .ac-code {
   #panel-multi #multi-table-wrap { margin: 0 !important; overflow: visible !important; }
   /* Forcer toutes les lignes du tableau visibles, bypass collapse top-5 */
   #comparables-table tbody tr.is-hidden { display: table-row !important; }
-  .card.is-stale { opacity: 1 !important; }
 
   .container { padding: 0 !important; max-width: none !important; }
   main, #app { padding: 0 !important; margin: 0 !important; }

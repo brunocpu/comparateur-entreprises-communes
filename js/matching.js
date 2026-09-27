@@ -147,14 +147,7 @@ export function summarizeComparables(target, comparables) {
     creations: relDelta(target.creations, summary.creations.median)
   };
 
-  // Écart à la médiane des comparables exprimé en UL : ce N'EST PAS un
-  // "potentiel théorique" — c'est l'écart à un échantillon de 10 voisins
-  // construit par similarité sectorielle.
-  const ulGapToMedian = summary.density.median != null
-    ? Math.round((summary.density.median - target.density) * target.population / 1000)
-    : null;
-
-  return { summary, delta, ulGapToMedian };
+  return { summary, delta };
 }
 
 export function relDelta(target, ref) {
