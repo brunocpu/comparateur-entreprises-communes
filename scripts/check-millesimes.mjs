@@ -13,13 +13,13 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { streamCsvFromZip } from '../js/zip-csv.js';
-import { PRODUCTS, STOCK_YEAR, STOCK_BASELINE_YEAR } from '../js/insee-api.js';
+import { PRODUCTS, STOCK_YEAR, STOCK_BASELINE_YEAR, ARTEFACT_PATH } from '../js/insee-api.js';
 
 const args = process.argv.slice(2);
 const zipFlag = args.indexOf('--zip');
 const zipPath = zipFlag >= 0 ? args[zipFlag + 1] : null;
 const CIBLE = args.find(a => /^\d[\dAB]\d{3}$/.test(a)) || '26281';
-const ARTEFACT = `data/communes-${STOCK_YEAR}.json`;
+const ARTEFACT = ARTEFACT_PATH;
 
 if (!existsSync(ARTEFACT)) {
   console.error(`✗ ${ARTEFACT} introuvable — lancer d'abord \`npm run build:data\`.`);

@@ -23,6 +23,7 @@ import { normalize, escapeHtml } from '../js/util.js';
 // Import en espace de noms : une fonction absente fait échouer son test, pas le fichier.
 import * as csv from '../js/export.js';
 import * as fmt from '../js/format.js';
+import * as api from '../js/insee-api.js';
 
 // ---------- quantile (R type-7 linear interpolation) ----------
 
@@ -281,7 +282,7 @@ describe('countInRadius', () => {
 // ---------- export CSV ----------
 
 describe('export CSV', () => {
-  const artefact = JSON.parse(readFileSync(new URL('../data/communes-2024.json', import.meta.url), 'utf8'));
+  const artefact = JSON.parse(readFileSync(new URL(`../${api.ARTEFACT_PATH}`, import.meta.url), 'utf8'));
   const byCode = new Map(artefact.records.map(r => [r.code, r]));
   const romans = byCode.get('26281');
   const valence = byCode.get('26362');
@@ -371,12 +372,34 @@ describe('libellés', () => {
   test('dix communes comparables : pluriel', () => assert.equal(fmt.fmtCommunesComparables(10), '10 communes comparables'));
 
   test('export CSV : zone désignée comme à l\'écran', () => {
-    const artefact = JSON.parse(readFileSync(new URL('../data/communes-2024.json', import.meta.url), 'utf8'));
+    const artefact = JSON.parse(readFileSync(new URL(`../${api.ARTEFACT_PATH}`, import.meta.url), 'utf8'));
     const romans = artefact.records.find(r => r.code === '26281');
     const scope = { kind: 'departement', value: '26' };
     const { candidates } = findComparables(romans, artefact.records, { scope });
     const content = csv.buildComparablesCsv(romans, candidates, summarizeComparables(romans, candidates), scope,
       { today: '01/01/2026', regionsByCode: regions, deptsByCode: depts });
     assert.match(content, /^# Zone de comparaison : Département Drôme \(26\)$/m);
+  });
+});
+
+// ---------- artefact pré-bundlé ----------
+
+describe('artefact pré-bundlé', () => {
+  const read = () => JSON.parse(readFileSync(new URL(`../${api.ARTEFACT_PATH}`, import.meta.url), 'utf8'));
+
+  test('l\'artefact du dépôt porte la version de données du code', () => {
+    assert.equal(api.checkArtefact(read()), null);
+  });
+  test('version différente de celle du code : refusé', () => {
+    const problem = api.checkArtefact({ ...read(), dataVersion: 'autre-version' });
+    assert.match(problem, /autre-version/);
+    assert.match(problem, new RegExp(api.DATA_VERSION));
+  });
+  test('sans communes : refusé', () => {
+    assert.ok(api.checkArtefact({ dataVersion: api.DATA_VERSION, records: [] }));
+  });
+  test('contenu illisible : refusé', () => {
+    assert.ok(api.checkArtefact(null));
+    assert.ok(api.checkArtefact({ dataVersion: api.DATA_VERSION }));
   });
 });
