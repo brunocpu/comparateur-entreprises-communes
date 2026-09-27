@@ -5,7 +5,9 @@
   "type": "module",
   "description": "Comparer une commune française à dix communes de taille et de profil sectoriel similaires sur les indicateurs Insee de démographie d'entreprises.",
   "scripts": {
-    "test": "node --test test/units.mjs",
+    "test": "node --test test/units.mjs test/golden.mjs",
+    "test:golden:update": "node test/golden.mjs --update",
+    "test:browser": "node --test test/browser.mjs",
     "test:e2e": "node test-pull.mjs",
     "build:data": "node scripts/build-data.mjs",
     "build:og": "node scripts/build-og-image.mjs",
