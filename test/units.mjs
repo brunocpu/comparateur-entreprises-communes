@@ -403,3 +403,20 @@ describe('artefact pré-bundlé', () => {
     assert.ok(api.checkArtefact({ dataVersion: api.DATA_VERSION }));
   });
 });
+
+describe('artefact : comparaison de contenu (build annuel)', () => {
+  const a = { builtAt: '2026-09-06T17:23:12.701Z', dataVersion: 'v', records: [{ code: '1', stock: 3 }] };
+
+  test('seule la date de build diffère : contenu identique', () => {
+    assert.equal(api.sameArtefactContent(a, { ...a, builtAt: '2026-11-15T04:00:00.000Z' }), true);
+  });
+  test('une valeur diffère : contenu différent', () => {
+    assert.equal(api.sameArtefactContent(a, { ...a, records: [{ code: '1', stock: 4 }] }), false);
+  });
+  test('version différente : contenu différent', () => {
+    assert.equal(api.sameArtefactContent(a, { ...a, dataVersion: 'w' }), false);
+  });
+  test('pas d\'artefact précédent : contenu différent', () => {
+    assert.equal(api.sameArtefactContent(null, a), false);
+  });
+});
