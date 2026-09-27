@@ -189,9 +189,11 @@ const setMeta = (key, value) => evaluate(idb(`const tx = db.transaction('meta', 
 const countCommunes = () => evaluate(idb(`const r = db.transaction('communes').objectStore('communes').count();
   r.onsuccess = () => { db.close(); res(r.result); };`));
 
+// Rechargement ordinaire, comme un visiteur qui revient : le service worker
+// reste dans la boucle (un rechargement forcé le contournerait).
 async function reload() {
   const loaded = cdp.waitEvent(e => e.method === 'Page.loadEventFired', 20000);
-  await cdp.send('Page.reload', { ignoreCache: true });
+  await cdp.send('Page.reload');
   await loaded;
 }
 
@@ -261,7 +263,7 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.equal(await evaluate(`document.querySelectorAll('#comparables-table tbody tr').length`), 2);
   });
 
-  test('S9 écarts à la médiane sans « % % » ni pourcentage pour la croissance', { todo: 'étape 2' }, async () => {
+  test('S9 écarts à la médiane sans « % % » ni pourcentage pour la croissance', async () => {
     for (const id of ['stock', 'density', 'crea']) {
       assert.doesNotMatch(norm(await text(`#ind-${id}-delta`)), /%\s*%/, `#ind-${id}-delta`);
     }
@@ -337,6 +339,9 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
   });
 
   test('S12 le service worker ne met pas l\'artefact en cache', { todo: 'étape 8' }, async () => {
+    await waitUntil('!!navigator.serviceWorker.controller', 10000, 'page contrôlée par le service worker');
+    await evaluate(`fetch('.${ARTEFACT_URL_PATH}').then(r => r.arrayBuffer()).then(() => true)`);
+    await sleep(500);
     const cached = await evaluate(`(async () => {
       const urls = [];
       for (const k of await caches.keys()) for (const r of await (await caches.open(k)).keys()) urls.push(r.url);

@@ -19,6 +19,19 @@ export const fmtPct = v => {
   }).format(v);
 };
 
+// Écarts à la médiane des comparables, affichés sous les indicateurs.
+// Écart relatif pour les niveaux ; écart en points pour la croissance, qui
+// est déjà un pourcentage (une différence de taux ne s'exprime pas en %).
+export const fmtDeltaVsMedian = v =>
+  v == null || !Number.isFinite(v) ? '' : `${pf1.format(v)} par rapport à la médiane des comparables`;
+
+const pt1 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1, signDisplay: 'exceptZero' });
+export function fmtPointsVsMedian(v) {
+  if (v == null || !Number.isFinite(v)) return '';
+  const pts = Math.round(v * 1000) / 10;
+  return `${pt1.format(pts)} ${Math.abs(pts) >= 2 ? 'points' : 'point'} d'écart avec la médiane`;
+}
+
 export function fmtDate(ts) {
   if (!ts) return '—';
   return new Date(ts).toLocaleDateString('fr-FR', {

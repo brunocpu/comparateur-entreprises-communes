@@ -22,6 +22,7 @@ import { fmtInt, fmtDec1, fmtPct, fmtPctSigned } from '../js/format.js';
 import { normalize, escapeHtml } from '../js/util.js';
 // Import en espace de noms : une fonction absente fait échouer son test, pas le fichier.
 import * as csv from '../js/export.js';
+import * as fmt from '../js/format.js';
 
 // ---------- quantile (R type-7 linear interpolation) ----------
 
@@ -324,5 +325,28 @@ describe('export CSV', () => {
 
   test('nom du fichier « Plusieurs communes »', () => {
     assert.equal(csv.multiCsvFilename([valence, romans]), 'comparateur-selection-26362-26281.csv');
+  });
+});
+
+// ---------- écarts à la médiane (libellés des indicateurs) ----------
+
+describe('écarts à la médiane', () => {
+  test('écart relatif : un seul signe %', () => {
+    assert.match(fmt.fmtDeltaVsMedian(-0.134), /^[-−]13,4\s%\spar rapport à la médiane des comparables$/);
+    assert.doesNotMatch(fmt.fmtDeltaVsMedian(0.05), /%\s*%/);
+  });
+  test('écart relatif positif signé', () => assert.match(fmt.fmtDeltaVsMedian(0.05), /^\+5\s%/));
+  test('croissance : écart en points, sans %', () => {
+    assert.match(fmt.fmtPointsVsMedian(-0.019), /^[-−]1,9 point d'écart avec la médiane$/);
+    assert.doesNotMatch(fmt.fmtPointsVsMedian(-0.019), /%/);
+  });
+  test('croissance : « points » au pluriel à partir de 2', () => {
+    assert.match(fmt.fmtPointsVsMedian(0.025), /^\+2,5 points d'écart/);
+    assert.match(fmt.fmtPointsVsMedian(0.0196), /^\+2 points d'écart/);
+  });
+  test('croissance : écart nul', () => assert.equal(fmt.fmtPointsVsMedian(0), '0 point d\'écart avec la médiane'));
+  test('valeur absente → chaîne vide', () => {
+    assert.equal(fmt.fmtDeltaVsMedian(null), '');
+    assert.equal(fmt.fmtPointsVsMedian(undefined), '');
   });
 });
