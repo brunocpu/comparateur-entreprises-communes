@@ -351,7 +351,7 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.equal(await countCommunes(), 34002);
   });
 
-  test('S12 le service worker ne met pas l\'artefact en cache', { todo: 'étape 8' }, async () => {
+  test('S12 le service worker ne met pas l\'artefact en cache', async () => {
     await waitUntil('!!navigator.serviceWorker.controller', 10000, 'page contrôlée par le service worker');
     await evaluate(`fetch('.${ARTEFACT_URL_PATH}').then(r => r.arrayBuffer()).then(() => true)`);
     await sleep(500);
@@ -394,6 +394,31 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     } finally {
       server.artefactOverride = null;
       await cdp.send('Network.setBypassServiceWorker', { bypass: false });
+    }
+  });
+
+  test('S14 hors ligne : l\'app et les données locales restent disponibles', async () => {
+    // Rétablit un cache complet (S11 l'a vidé), puis coupe le serveur : la
+    // coupure réseau de CDP ne s'applique pas au service worker, qui a sa
+    // propre cible — seule l'absence réelle du serveur le prive du réseau.
+    await reload();
+    await waitUntil(`!document.getElementById('search').hidden`, 60000, 'recherche affichée');
+    // Millésime local périmé : l'app tente de reprendre l'artefact, échoue
+    // faute de réseau, et doit retomber sur les données locales.
+    await setMeta('dataVersion', 'millesime-anterieur');
+    const port = server.address().port;
+    await new Promise(r => { server.close(r); server.closeAllConnections(); });
+    try {
+      await reload();
+      assert.equal(await evaluate(`fetch('./manifest.json?sonde=' + Date.now()).then(() => 'en ligne', () => 'hors ligne')`),
+        'hors ligne', 'la coupure réseau doit être effective');
+      await waitUntil(`!document.getElementById('search').hidden`, 20000, 'recherche affichée hors ligne');
+      assert.match(norm(await text('#cache-status')), /^34 002 communes/);
+      await pickCommune('#commune-input', '#autocomplete', 'Romans-sur', '26281');
+      await waitUntil(`!document.getElementById('results').hidden`, 10000, 'résultats hors ligne');
+      assert.equal(norm(await text('#ind-stock')), '2 883');
+    } finally {
+      await new Promise(r => server.listen(port, '127.0.0.1', r));
     }
   });
 });
