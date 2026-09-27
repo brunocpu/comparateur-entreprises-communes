@@ -293,8 +293,9 @@ describe('export CSV', () => {
     const summary = summarizeComparables(romans, candidates);
     const lines = csv.buildComparablesCsv(romans, candidates, summary, { kind: 'national' }, { today })
       .split('\r\n').filter(l => !l.startsWith('# Export :'));
+    // Fins de ligne indifférentes : Git peut extraire la référence en CRLF.
     const expected = readFileSync(new URL('./fixtures/export-26281-national.csv', import.meta.url), 'utf8')
-      .replace(/\n$/, '').split('\n');
+      .replace(/\r?\n$/, '').split(/\r?\n/);
     assert.deepEqual(lines, expected);
   });
 
@@ -307,7 +308,7 @@ describe('export CSV', () => {
   test('« Plusieurs communes » : même en-tête de colonnes que « Une commune »', () => {
     const header = l => l.find(x => x.startsWith('Type;'));
     const multi = csv.buildMultiCsv([valence, romans], { today }).split('\r\n');
-    const single = readFileSync(new URL('./fixtures/export-26281-national.csv', import.meta.url), 'utf8').split('\n');
+    const single = readFileSync(new URL('./fixtures/export-26281-national.csv', import.meta.url), 'utf8').split(/\r?\n/);
     assert.equal(header(multi), header(single));
   });
 

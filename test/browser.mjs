@@ -316,7 +316,8 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.equal(content.charCodeAt(0), 0xfeff, 'BOM UTF-8');
     const lines = content.slice(1).split('\r\n').filter(l => !l.startsWith('# Export :'));
     if (UPDATE) writeFileSync(CSV_FIXTURE, lines.join('\n') + '\n');
-    const expected = readFileSync(CSV_FIXTURE, 'utf8').replace(/\n$/, '').split('\n');
+    // Fins de ligne indifférentes : Git peut extraire la référence en CRLF.
+    const expected = readFileSync(CSV_FIXTURE, 'utf8').replace(/\r?\n$/, '').split(/\r?\n/);
     assert.deepEqual(lines, expected);
   });
 
