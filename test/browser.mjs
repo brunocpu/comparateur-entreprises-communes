@@ -314,10 +314,12 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.equal(await isHidden('#btn-multi-export'), false);
   });
 
-  test('S8 export CSV « Plusieurs communes »', { todo: 'étape 1' }, async () => {
-    const { content } = await download(() => click('#btn-multi-export'), 3000);
+  test('S8 export CSV « Plusieurs communes »', async () => {
+    const { name, content } = await download(() => click('#btn-multi-export'), 3000);
+    assert.equal(name, 'comparateur-selection-26362-26281.csv');
+    assert.equal(content.charCodeAt(0), 0xfeff, 'BOM UTF-8');
     const rows = content.split('\r\n').filter(l => /^Commune;/.test(l));
-    assert.equal(rows.length, 2);
+    assert.deepEqual(rows.map(r => r.split(';')[2]), ['26362', '26281']);
   });
 
   test('aucune erreur JavaScript pendant les parcours nominaux', () => {

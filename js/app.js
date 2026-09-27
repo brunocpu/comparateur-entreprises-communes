@@ -2,7 +2,7 @@ import * as cache from './cache.js';
 import { pullAll, DATA_VERSION } from './insee-api.js';
 import { findComparables, summarizeComparables, countInRadius } from './matching.js';
 import * as ui from './ui.js';
-import { exportCsv } from './export.js';
+import { exportCsv, exportMultiCsv } from './export.js';
 import { fmtDate } from './format.js';
 import { normalize } from './util.js';
 
@@ -520,5 +520,9 @@ function wireExport() {
     if (!state.selected || !state.comparables) return;
     const scope = ui.readScopeFromUI();
     exportCsv(state.selected, state.comparables, state.summary, scope);
+  });
+  document.getElementById('btn-multi-export').addEventListener('click', () => {
+    if (state.customCommunes.length < 2) return;
+    exportMultiCsv(state.customCommunes);
   });
 }
