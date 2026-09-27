@@ -1,4 +1,5 @@
-# Déploiement automatique sur GitHub Pages à chaque push sur `main`.
+# Déploiement automatique sur GitHub Pages à chaque push sur `main`, et après
+# chaque exécution réussie de build-data.yml.
 #
 # Pré-requis côté GitHub :
 #   Settings → Pages → Build and deployment → Source : « GitHub Actions »
@@ -12,6 +13,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Le commit de données poussé par build-data.yml l'est avec le GITHUB_TOKEN,
+  # et GitHub ne déclenche aucun autre workflow sur un tel push : le
+  # déploiement est donc chaîné sur la fin de ce workflow.
+  workflow_run:
+    workflows: ["Refresh bundled data"]
+    types: [completed]
 
 permissions:
   contents: read
@@ -24,6 +31,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
