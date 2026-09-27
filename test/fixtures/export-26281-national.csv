@@ -1,0 +1,22 @@
+# Démographie des entreprises entre communes comparables
+# Cible : Romans-sur-Isère (26281)
+# Zone de comparaison : Toute la France
+# Sélection : 10 commune(s) comparable(s)
+# Sources : Insee Side (démographie d'entreprises), populations légales du Recensement (LOV2). geo.api.gouv.fr.
+
+Type;Commune;Code Insee;Département;Population;Entreprises actives;Entreprises pour 1 000 habitants;Croissance 2014→2024;Créations d'entreprises (annuel);Part Industrie (A10);Part Construction (A10);Part Commerce, transports, hébergement (A10);Part Information, communication (A10);Part Activités financières (A10);Part Activités immobilières (A10);Part Services scientifiques, soutien (A10);Part Administration, santé, éducation (A10);Part Services aux ménages (A10)
+CIBLE;Romans-sur-Isère;26281;26;33464;2883;86,2;33,8 %;500;7,5 %;13,3 %;22,0 %;3,0 %;4,9 %;4,6 %;15,9 %;18,7 %;10,3 %
+Comparable;Marignane;13054;13;33692;2695;80,0;56,7 %;632;5,2 %;19,3 %;24,4 %;2,3 %;4,1 %;3,6 %;14,5 %;17,7 %;8,9 %
+Comparable;Saint-Médard-en-Jalles;33449;33;32910;2633;80,0;90,5 %;468;5,5 %;9,7 %;19,2 %;4,2 %;4,9 %;3,6 %;20,2 %;21,5 %;11,2 %
+Comparable;Nevers;58194;58;33085;2251;68,0;28,0 %;414;5,0 %;7,2 %;26,7 %;2,3 %;4,6 %;7,8 %;14,9 %;19,3 %;12,3 %
+Comparable;Aix-les-Bains;73008;73;32406;3511;108,3;56,6 %;736;4,4 %;8,9 %;21,8 %;3,2 %;3,8 %;7,8 %;19,5 %;19,0 %;11,6 %
+Comparable;Épinal;88160;88;32251;2721;84,4;29,8 %;518;6,0 %;7,7 %;24,2 %;2,9 %;4,6 %;5,8 %;19,3 %;18,2 %;11,4 %
+Comparable;Montluçon;03185;03;33147;2213;66,8;19,7 %;385;5,6 %;8,7 %;30,5 %;2,0 %;5,6 %;5,2 %;12,7 %;18,0 %;11,7 %
+Comparable;Saint-Laurent-du-Var;06123;06;32172;4034;125,4;51,9 %;771;3,7 %;13,6 %;24,1 %;3,0 %;4,1 %;7,6 %;18,2 %;14,1 %;11,4 %
+Comparable;Vienne;38544;38;31778;3227;101,5;44,0 %;616;4,4 %;14,0 %;23,8 %;3,3 %;4,6 %;4,2 %;20,6 %;16,1 %;9,1 %
+Comparable;Agen;47001;47;32801;3133;95,5;38,0 %;631;4,3 %;6,0 %;26,7 %;1,8 %;5,3 %;5,4 %;18,9 %;21,2 %;10,5 %
+Comparable;Saint-Chamond;42207;42;35646;2467;69,2;45,5 %;538;6,9 %;14,5 %;24,8 %;2,1 %;5,7 %;5,5 %;15,3 %;15,8 %;9,3 %
+
+Quart inférieur (Q1) (n=10);;;;32290;2509;71,9;31,8 %;481;;;;;;;;;
+Médiane (n=10);;;;32856;2708;82,2;44,7 %;577;5,1 %;9,3 %;24,3 %;2,6 %;4,6 %;5,5 %;18,6 %;18,1 %;11,3 %
+Quart supérieur (Q3) (n=10);;;;33132;3204;100,0;55,4 %;632;;;;;;;;;
