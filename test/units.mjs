@@ -445,3 +445,14 @@ describe('textes : millésimes conformes aux constantes', () => {
     assert.match(read('index.html'), new RegExp(`population ${populations}, entreprises ${stocks}, créations ${creations}`));
   });
 });
+
+describe('textes : terminologie Insee', () => {
+  const files = ['index.html', 'README.md', 'js/app.js', 'js/ui.js', 'js/export.js'];
+  for (const f of files) {
+    test(`${f} : « populations de référence », pas « populations légales »`, () => {
+      const content = readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+      const found = [...content.matchAll(/populations?\s+légales?|millésime\s+légal/gi)].map(m => m[0]);
+      assert.deepEqual(found, []);
+    });
+  }
+});
