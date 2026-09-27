@@ -350,3 +350,33 @@ describe('écarts à la médiane', () => {
     assert.equal(fmt.fmtPointsVsMedian(undefined), '');
   });
 });
+
+// ---------- libellés : zone de comparaison, nombre de comparables ----------
+
+describe('libellés', () => {
+  const regions = new Map([['84', { code: '84', nom: 'Auvergne-Rhône-Alpes' }]]);
+  const depts = new Map([['26', { code: '26', nom: 'Drôme' }]]);
+
+  test('zone nationale', () => assert.equal(fmt.scopeLabel({ kind: 'national' }, regions, depts), 'Toute la France'));
+  test('zone absente → nationale', () => assert.equal(fmt.scopeLabel(null), 'Toute la France'));
+  test('région nommée', () => assert.equal(fmt.scopeLabel({ kind: 'region', value: '84' }, regions, depts), 'Région Auvergne-Rhône-Alpes'));
+  test('département nommé', () => assert.equal(fmt.scopeLabel({ kind: 'departement', value: '26' }, regions, depts), 'Département Drôme (26)'));
+  test('référentiels absents : repli sur le code', () => {
+    assert.equal(fmt.scopeLabel({ kind: 'region', value: '84' }), 'Région 84');
+    assert.equal(fmt.scopeLabel({ kind: 'departement', value: '26' }), 'Département 26');
+  });
+  test('rayon', () => assert.equal(fmt.scopeLabel({ kind: 'distance', value: 50 }), 'Rayon 50 km'));
+
+  test('une commune comparable : singulier', () => assert.equal(fmt.fmtCommunesComparables(1), '1 commune comparable'));
+  test('dix communes comparables : pluriel', () => assert.equal(fmt.fmtCommunesComparables(10), '10 communes comparables'));
+
+  test('export CSV : zone désignée comme à l\'écran', () => {
+    const artefact = JSON.parse(readFileSync(new URL('../data/communes-2024.json', import.meta.url), 'utf8'));
+    const romans = artefact.records.find(r => r.code === '26281');
+    const scope = { kind: 'departement', value: '26' };
+    const { candidates } = findComparables(romans, artefact.records, { scope });
+    const content = csv.buildComparablesCsv(romans, candidates, summarizeComparables(romans, candidates), scope,
+      { today: '01/01/2026', regionsByCode: regions, deptsByCode: depts });
+    assert.match(content, /^# Zone de comparaison : Département Drôme \(26\)$/m);
+  });
+});

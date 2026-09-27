@@ -519,7 +519,8 @@ function wireExport() {
   document.getElementById('btn-export').addEventListener('click', () => {
     if (!state.selected || !state.comparables) return;
     const scope = ui.readScopeFromUI();
-    exportCsv(state.selected, state.comparables, state.summary, scope);
+    exportCsv(state.selected, state.comparables, state.summary, scope,
+      { regionsByCode: state.regionsByCode, deptsByCode: state.departementsByCode });
   });
   document.getElementById('btn-multi-export').addEventListener('click', () => {
     if (state.customCommunes.length < 2) return;

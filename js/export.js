@@ -1,4 +1,5 @@
 import { SECTOR_LABELS, A10_SECTORS } from './insee-api.js';
+import { scopeLabel } from './format.js';
 
 // Formattage fr-FR pour le CSV (Excel parse correctement avec ; comme séparateur
 // et virgule décimale).
@@ -48,19 +49,15 @@ const communeRow = (c, type) => [
 
 // Contenu du CSV « Une commune » : cible, comparables et quartiles du panel.
 // Fonction pure (sans DOM) pour être testable hors navigateur.
-export function buildComparablesCsv(target, comparables, summary, scope, { today = todayFr() } = {}) {
+// `regionsByCode` / `deptsByCode` : pour nommer la zone comme à l'écran.
+export function buildComparablesCsv(target, comparables, summary, scope,
+                                    { today = todayFr(), regionsByCode, deptsByCode } = {}) {
   const rows = [];
-
-  let scopeLabel = '';
-  if (!scope || scope.kind === 'national') scopeLabel = 'Toute la France';
-  else if (scope.kind === 'region')        scopeLabel = `Région (code ${scope.value})`;
-  else if (scope.kind === 'departement')   scopeLabel = `Département ${scope.value}`;
-  else if (scope.kind === 'distance')      scopeLabel = `Rayon ${scope.value} km`;
 
   // Bandeau de métadonnées (lecteur humain en haut du fichier)
   rows.push(`# Démographie des entreprises entre communes comparables`);
   rows.push(`# Cible : ${target.name} (${target.code})`);
-  rows.push(`# Zone de comparaison : ${scopeLabel}`);
+  rows.push(`# Zone de comparaison : ${scopeLabel(scope, regionsByCode, deptsByCode)}`);
   rows.push(`# Sélection : ${comparables.length} commune(s) comparable(s)`);
   rows.push(SOURCES);
   rows.push(`# Export : ${today}`);
@@ -124,9 +121,9 @@ function downloadCsv(content, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export function exportCsv(target, comparables, summary, scope) {
+export function exportCsv(target, comparables, summary, scope, refs = {}) {
   const safeName = target.name.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-zA-Z0-9]+/g, '-');
-  downloadCsv(buildComparablesCsv(target, comparables, summary, scope), `comparateur-${target.code}-${safeName}.csv`);
+  downloadCsv(buildComparablesCsv(target, comparables, summary, scope, refs), `comparateur-${target.code}-${safeName}.csv`);
 }
 
 export function exportMultiCsv(communes) {
