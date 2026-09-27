@@ -56,7 +56,11 @@ Insee, à utiliser quand on touche à la pipeline réseau (`insee-api.js`,
 ## Conventions
 
 - Commits en **français**, mono-auteur (pas de trailer `Co-Authored-By:`).
-- Messages descriptifs : décrire le **pourquoi**, pas seulement le quoi.
+- Titre au format `type(portée): objet`, le type reflétant le contenu réel
+  du commit : `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`.
+- Corps : ce qui change et sa raison, énoncée comme une règle ou une
+  contrainte (« les identifiants Melodi ne sont pas stables dans le temps »).
+  Ni récit de l'incident, ni résultats de tests, ni détail d'outillage.
 - Documenter en commentaire les choix non évidents (la consigne s'applique au code aussi : commentaires `WHY`, pas `WHAT`).
 - Pas de surcouches superflues (pas de TypeScript, pas de bundler, pas de framework — la simplicité est le contrat).
 

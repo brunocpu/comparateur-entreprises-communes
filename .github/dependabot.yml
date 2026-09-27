@@ -1,8 +1,9 @@
 version: 2
 
-# Surveillance des dépendances + des versions d'actions GitHub.
-# Périodicité mensuelle : devDeps marginales (resvg-js, wawoff2, @fontsource/*),
-# pas la peine de spammer la boîte mail à chaque sortie patch.
+# Surveillance des dépendances npm et des versions d'actions GitHub.
+# Périodicité mensuelle : les dépendances npm servent uniquement au build
+# (resvg-js, wawoff2, @fontsource/*) et n'ont pas d'effet sur le site.
+# Titres produits : « chore(deps-dev): … », « chore(deps): … », « chore(ci): … ».
 updates:
   - package-ecosystem: "npm"
     directory: "/"
@@ -10,7 +11,7 @@ updates:
       interval: "monthly"
     open-pull-requests-limit: 5
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "chore"
       include: "scope"
 
   - package-ecosystem: "github-actions"
