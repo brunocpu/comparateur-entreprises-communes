@@ -684,30 +684,36 @@ export function setStaleResults(stale) {
   });
 }
 
-// Sticky banner : visible quand l'utilisateur scrolle hors de la card recherche
-// ET que les résultats sont visibles. Affiche cible + zone + lien « Changer ↑ ».
+// Sticky banner : prend le relais du bloc de recherche ou de la barre
+// récapitulative — l'un ou l'autre est affiché — quand celui-ci sort de
+// l'écran, et seulement si des résultats sont visibles. Un élément masqué
+// (`hidden`) n'intersecte jamais : suivre le seul bloc de recherche, replié
+// après chaque analyse, affichait le bandeau en haut de page, en doublon de
+// la barre récapitulative. Affiche cible + zone + lien « Changer ↑ ».
 let stickyObserver = null;
 export function setupStickyBanner({ onChange } = {}) {
   const banner = document.getElementById('sticky-banner');
   const search = document.getElementById('search');
-  if (!banner || !search) return;
+  const summary = document.getElementById('search-summary');
+  if (!banner || !search || !summary) return;
 
+  const inView = new Map();
   if (stickyObserver) stickyObserver.disconnect();
   stickyObserver = new IntersectionObserver(entries => {
-    for (const entry of entries) {
-      const resultsVisible = !document.getElementById('results').hidden;
-      const visible = !entry.isIntersecting && resultsVisible;
-      banner.hidden = false;
-      banner.classList.toggle('is-visible', visible);
-      banner.setAttribute('aria-hidden', visible ? 'false' : 'true');
-      // `inert` retire le banner du flux de tabulation et du calque AT quand
-      // il est masqué — sinon Shift+Tab depuis le haut atteint un bouton
-      // visuellement invisible (anti-pattern WCAG 4.1.2).
-      if (visible) banner.removeAttribute('inert');
-      else         banner.setAttribute('inert', '');
-    }
+    for (const entry of entries) inView.set(entry.target, entry.isIntersecting);
+    const resultsVisible = !document.getElementById('results').hidden;
+    const visible = resultsVisible && !inView.get(search) && !inView.get(summary);
+    banner.hidden = false;
+    banner.classList.toggle('is-visible', visible);
+    banner.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    // `inert` retire le banner du flux de tabulation et du calque AT quand
+    // il est masqué — sinon Shift+Tab depuis le haut atteint un bouton
+    // visuellement invisible (anti-pattern WCAG 4.1.2).
+    if (visible) banner.removeAttribute('inert');
+    else         banner.setAttribute('inert', '');
   }, { threshold: 0, rootMargin: '-60px 0px 0px 0px' });
   stickyObserver.observe(search);
+  stickyObserver.observe(summary);
 
   document.getElementById('sticky-change').onclick = () => {
     if (onChange) onChange();

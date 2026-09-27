@@ -270,17 +270,21 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.doesNotMatch(norm(await text('#ind-growth-delta')), /%/);
   });
 
-  test('S10 bandeau fixe masqué en haut de page, affiché après défilement', { todo: 'étape 3' }, async () => {
+  test('S10 bandeau fixe masqué en haut de page, affiché après défilement', async () => {
     await evaluate('window.scrollTo(0, 0)');
     await sleep(400);
     assert.equal(await evaluate(`document.getElementById('sticky-banner').classList.contains('is-visible')`), false, 'visible en haut de page');
     await evaluate('window.scrollTo(0, document.body.scrollHeight)');
     await sleep(400);
     assert.equal(await evaluate(`document.getElementById('sticky-banner').classList.contains('is-visible')`), true, 'masqué après défilement');
+    // « Changer ↑ » déplie le bloc de recherche et y remonte : le bandeau s'efface.
+    await click('#sticky-change');
+    await waitUntil(`!document.getElementById('sticky-banner').classList.contains('is-visible')`, 3000, 'bandeau effacé après « Changer ↑ »');
+    assert.equal(await isHidden('#search'), false);
   });
 
   test('S3 passage à « Toute la France » : recalcul à 10 comparables', async () => {
-    await click('#btn-modify');
+    if (!(await isHidden('#search-summary'))) await click('#btn-modify');
     await click('.scope-segment[data-scope="national"]');
     await waitUntil(`/Toute la France · n = 10$/.test(document.getElementById('comparables-h2').textContent)`, 5000, 'titre national');
     assert.equal(await evaluate(`document.querySelectorAll('#comparables-table tbody tr').length`), 11);
