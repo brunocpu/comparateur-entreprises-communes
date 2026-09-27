@@ -2,7 +2,7 @@
 //
 // Filtres durs :
 //   - Population : bande ratio [target/1.25 ; target×1.25] (asymétrique mais
-//     stable en log-échelle ; recommandation Insee statisticien).
+//     stable en log-échelle).
 //   - sectorialCoverage ≥ 95 %, qui revient en pratique à écarter les communes
 //     sans aucune unité légale : l'Insee ne masque aucune cellule sectorielle,
 //     la couverture vaut donc 1 ou 0 (voir le commentaire dans insee-api.js).
@@ -147,14 +147,7 @@ export function summarizeComparables(target, comparables) {
     creations: relDelta(target.creations, summary.creations.median)
   };
 
-  // Écart à la médiane des comparables exprimé en UL : ce N'EST PAS un
-  // "potentiel théorique" — c'est l'écart à un échantillon de 10 voisins
-  // construit par similarité sectorielle.
-  const ulGapToMedian = summary.density.median != null
-    ? Math.round((summary.density.median - target.density) * target.population / 1000)
-    : null;
-
-  return { summary, delta, ulGapToMedian };
+  return { summary, delta };
 }
 
 export function relDelta(target, ref) {

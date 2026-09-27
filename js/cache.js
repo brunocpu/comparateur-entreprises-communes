@@ -59,11 +59,6 @@ export async function bulkPut(records) {
   });
 }
 
-export async function getCommune(code) {
-  const db = await openDB();
-  return reqToPromise(tx(db, 'communes').get(code));
-}
-
 export async function getAllCommunes() {
   const db = await openDB();
   return reqToPromise(tx(db, 'communes').getAll());

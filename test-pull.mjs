@@ -61,7 +61,7 @@ try {
 
   // Sectorial coverage distribution sanity check
   const lowCov = records.filter(r => r.sectorialCoverage < 0.85).length;
-  console.log(`     ${lowCov.toLocaleString('fr-FR')}/${records.length.toLocaleString('fr-FR')} communes avec coverage A10 < 85% (secret stat sur petites cellules)`);
+  console.log(`     ${lowCov.toLocaleString('fr-FR')}/${records.length.toLocaleString('fr-FR')} communes avec coverage A10 < 85% (communes sans entreprise active)`);
 
   // Test summarizeComparables shape and the matching guards.
   const { findComparables, summarizeComparables, countInRadius } = await import('./js/matching.js');
@@ -150,7 +150,7 @@ try {
   // Indicators integrity
   const withGrowth = records.filter(r => r.growth10y != null).length;
   // stockBaseline ≥ 20 obligatoire — moitié des communes (toutes petites) sont
-  // exclues du calcul, anti-bruit. C'est volontaire (recommandation statisticien).
+  // exclues du calcul, anti-bruit. C'est volontaire.
   check('croissance 10y calculée (stockBaseline ≥ 20)', withGrowth > records.length * 0.4,
         `${withGrowth}/${records.length} communes`);
 
@@ -165,7 +165,7 @@ try {
   // Memory footprint estimation (serialized JSON)
   const json = JSON.stringify(records);
   const mb = (json.length / 1024 / 1024).toFixed(2);
-  console.log(`\n  Empreinte sérialisée : ${mb} MB (cible spec : 5–8 MB IndexedDB)`);
+  console.log(`\n  Empreinte sérialisée : ${mb} MB`);
 
   console.log(failed === 0 ? '\nTOUS LES TESTS PASSENT' : `\n${failed} test(s) en échec`);
   process.exit(failed === 0 ? 0 : 1);

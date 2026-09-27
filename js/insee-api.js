@@ -70,6 +70,32 @@ const POP_YEAR = '2023';
 // visiteur déjà venu garde ses anciens chiffres sous les nouveaux libellés.
 export const DATA_VERSION = `${POP_YEAR}-${STOCK_BASELINE_YEAR}-${STOCK_YEAR}-${CREA_YEAR}`;
 
+// Artefact pré-bundlé : chemin relatif à la racine du site et du dépôt,
+// partagé par l'app, le script de build et les contrôles.
+export const ARTEFACT_PATH = 'data/communes-2024.json';
+
+// Contrôle d'un artefact avant indexation : renvoie null s'il est utilisable,
+// sinon le motif du refus. Un artefact d'une autre version que le code
+// (build en retard, cache intermédiaire) serait sinon enregistré sous la
+// version du code et ne serait plus jamais remplacé.
+export function checkArtefact(data) {
+  if (!data || !Array.isArray(data.records) || !data.records.length) return 'Artefact invalide ou vide';
+  if (data.dataVersion !== DATA_VERSION) {
+    return `Artefact de version ${data.dataVersion}, version attendue ${DATA_VERSION}`;
+  }
+  return null;
+}
+
+// Deux artefacts ne différant que par leur date de build ont le même contenu.
+// Utilisé par `scripts/build-data.mjs` pour conserver la date précédente :
+// le fichier reste alors identique octet pour octet et le build annuel ne
+// produit pas de commit lorsque l'Insee n'a rien changé.
+export function sameArtefactContent(a, b) {
+  if (!a || !b) return false;
+  const withoutDate = ({ builtAt, ...rest }) => rest;
+  return JSON.stringify(withoutDate(a)) === JSON.stringify(withoutDate(b));
+}
+
 // Année d'observation retenue dans chaque jeu de données. Exporté pour que
 // `scripts/check-datasets.mjs` puisse la confronter à la dernière année
 // réellement publiée : l'identifiant du produit ne suffit pas à la détecter,
@@ -96,14 +122,13 @@ const KEEP_LEVELS = new Set(['COM', 'ARM']);
 // header, and Insee only exposes `content-disposition` via
 // Access-Control-Expose-Headers — so `res.headers.get('content-range')` is
 // null from the browser. We therefore probe the total size with HEAD (which
-// returns `content-length`, a safelisted header always accessible) and use
-// the asked range length as ground truth for chunk validation.
+// returns `content-length`, a safelisted header always accessible) and
+// advance by the length actually received for each chunk.
 async function fetchZipAsArrayBuffer(url, { signal, onProgress } = {}) {
   const CHUNK = 4 * 1024 * 1024;
   const MAX_ATTEMPTS = 4;
 
   async function fetchRange(start, end) {
-    const expected = end - start + 1;
     let lastErr;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {
@@ -115,11 +140,6 @@ async function fetchZipAsArrayBuffer(url, { signal, onProgress } = {}) {
           throw new Error(`HTTP ${res.status} sur ${url}`);
         }
         const buf = new Uint8Array(await res.arrayBuffer());
-        // For 206 with our last chunk we may receive fewer bytes if `end`
-        // exceeds the file size; otherwise the chunk must match exactly.
-        if (res.status === 206 && buf.length !== expected && buf.length !== expected - (end - (start + buf.length - 1))) {
-          // Strict check unless this is plausibly a tail partial.
-        }
         return { buf, status: res.status };
       } catch (err) {
         lastErr = err;
@@ -312,10 +332,7 @@ async function downloadAndStream(productKey, signal, progress, downloadShare = 0
   progress(0, `Téléchargement — ${friendly}…`);
   const buffer = await fetchZipAsArrayBuffer(url, {
     signal,
-    onProgress: (frac, bytes) => {
-      if (frac != null) progress(frac * downloadShare, `Téléchargement — ${friendly} (${Math.round(frac * 100)} %)`);
-      else progress(0.05, `Téléchargement — ${friendly} (${(bytes / 1e6).toFixed(1)} Mo reçus)`);
-    }
+    onProgress: frac => progress(frac * downloadShare, `Téléchargement — ${friendly} (${Math.round(frac * 100)} %)`)
   });
   return { buffer, dataPattern: data, ds, friendly };
 }

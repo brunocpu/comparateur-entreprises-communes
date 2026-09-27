@@ -1,6 +1,7 @@
-import { A10_SECTORS, SECTOR_LABELS, SECTOR_DETAILS } from './insee-api.js';
-import { fmtInt, fmtDec1, fmtPct, fmtPctSigned } from './format.js';
+import { A10_SECTORS, SECTOR_LABELS, SECTOR_DETAILS, STOCK_BASELINE_YEAR, STOCK_YEAR } from './insee-api.js';
+import { fmtInt, fmtDec1, fmtPct, fmtDeltaVsMedian, fmtPointsVsMedian, fmtCommunesComparables, scopeLabel } from './format.js';
 import { escapeHtml } from './util.js';
+import { N_RECOMMENDED, COVERAGE_FLOOR } from './matching.js';
 
 // Respect du paramètre système « réduire les animations » (RGAA 13.x).
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -82,7 +83,7 @@ export function setupAutocomplete(input, listEl, getItems, onPick) {
     listEl.innerHTML = '';
     items.forEach((it, i) => {
       const li = document.createElement('li');
-      li.id = `ac-opt-${i}`;
+      li.id = `${listEl.id}-opt-${i}`;
       li.setAttribute('role', 'option');
       if (i === active) {
         li.setAttribute('aria-selected', 'true');
@@ -131,56 +132,29 @@ export function setupAutocomplete(input, listEl, getItems, onPick) {
 
 // ---------- target card ----------
 
-const DELTA_LABELS = {
-  stock:     '% par rapport à la médiane des comparables',
-  density:   '% par rapport à la médiane des comparables',
-  growth:    'points d\'écart avec la médiane',
-  crea:      '% par rapport à la médiane des comparables'
-};
-
 export function renderTarget(target, summary) {
   const nameEl = document.getElementById('target-name');
   const armPrefix = target.isArm ? 'Arrondissement municipal — ' : '';
   nameEl.textContent = `${armPrefix}${target.name} (${target.code})`;
+  // La ligne `target-meta` est rédigée par renderScopeBadge, qui connaît la zone.
 
-  document.getElementById('target-meta').textContent =
-    `Département ${target.dept} — population ${fmtInt(target.population)} habitants` +
-    ` · ${summary.summary.n} communes comparables`;
-
-  setIndicator('stock',   fmtInt(target.stock),         summary.delta.stock,     DELTA_LABELS.stock);
-  setIndicator('density', fmtDec1(target.density),      summary.delta.density,   DELTA_LABELS.density);
-  setIndicator('growth',  fmtPct(target.growth10y),     summary.delta.growth10y, DELTA_LABELS.growth);
-  setIndicator('crea',    fmtInt(target.creations),     summary.delta.creations, DELTA_LABELS.crea);
+  setIndicator('stock',   fmtInt(target.stock),         summary.delta.stock,     fmtDeltaVsMedian);
+  setIndicator('density', fmtDec1(target.density),      summary.delta.density,   fmtDeltaVsMedian);
+  setIndicator('growth',  fmtPct(target.growth10y),     summary.delta.growth10y, fmtPointsVsMedian);
+  setIndicator('crea',    fmtInt(target.creations),     summary.delta.creations, fmtDeltaVsMedian);
 
   // Bullet charts sous chaque indicateur : Q1—Q3 ribbon + médiane + cible
   renderBullet('stock',   target.stock,      summary.summary.stock);
   renderBullet('density', target.density,    summary.summary.density);
   renderBullet('growth',  target.growth10y,  summary.summary.growth10y);
   renderBullet('crea',    target.creations,  summary.summary.creations);
-
-  // Écart de densité d'entreprises exprimé en pourcentage par rapport à la
-  // médiane des comparables — sans conversion en nombre absolu d'entreprises
-  // (la médiane porte sur 10 voisins choisis par similarité, pas sur une norme).
-  const gapEl = document.getElementById('theoretical-gap');
-  const dDelta = summary.delta.density;
-  if (dDelta == null) {
-    gapEl.textContent = '';
-  } else if (dDelta > 0) {
-    gapEl.textContent =
-      `Nombre d'entreprises pour 1 000 habitants : +${(dDelta * 100).toFixed(1)} % par rapport à la médiane des communes comparables.`;
-  } else if (dDelta < 0) {
-    gapEl.textContent =
-      `Nombre d'entreprises pour 1 000 habitants : ${(dDelta * 100).toFixed(1)} % par rapport à la médiane des communes comparables.`;
-  } else {
-    gapEl.textContent = `Nombre d'entreprises pour 1 000 habitants aligné sur la médiane des comparables.`;
-  }
 }
 
-function setIndicator(key, value, delta, suffix) {
+function setIndicator(key, value, delta, fmtDelta) {
   document.getElementById(`ind-${key}`).textContent = value;
   const d = document.getElementById(`ind-${key}-delta`);
   if (delta == null) { d.textContent = ''; d.className = 'indicator-delta'; return; }
-  d.textContent = `${fmtPctSigned(delta)} ${suffix}`;
+  d.textContent = fmtDelta(delta);
   d.className = 'indicator-delta ' + (delta >= 0 ? 'delta-pos' : 'delta-neg');
 }
 
@@ -189,7 +163,7 @@ function setIndicator(key, value, delta, suffix) {
 const BULLET_LABELS = {
   stock:   { noun: 'entreprises actives',         fmt: fmtInt },
   density: { noun: 'entreprises pour 1 000 hab.', fmt: fmtDec1 },
-  growth:  { noun: 'croissance 2014→2024',        fmt: fmtPct },
+  growth:  { noun: `croissance ${STOCK_BASELINE_YEAR}→${STOCK_YEAR}`, fmt: fmtPct },
   crea:    { noun: 'créations par an',            fmt: fmtInt }
 };
 function renderBullet(key, target, stat) {
@@ -301,7 +275,7 @@ export function renderSectorChart(target, medianShares, opts = {}) {
           ${m != null ? `<span class="muted">médiane ${fmtPct(m)}</span>` : ''}
         </span>
       </div>
-      <div class="sector-bars" aria-label="part sectorielle ${SECTOR_LABELS[code]} : cible ${fmtPct(t)}, médiane ${m != null ? fmtPct(m) : 'non disponible'}">
+      <div class="sector-bars" role="img" aria-label="part sectorielle ${SECTOR_LABELS[code]} : cible ${fmtPct(t)}, médiane ${m != null ? fmtPct(m) : 'non disponible'}">
         <div class="sector-bar-target" style="width:${tWidth.toFixed(1)}%"></div>
         ${mWidth != null ? `<div class="sector-bar-median" style="left:${mWidth.toFixed(1)}%"></div>` : ''}
       </div>
@@ -319,7 +293,7 @@ export function renderSectorChart(target, medianShares, opts = {}) {
   // pour préserver l'anonymat des entreprises (faibles effectifs).
   const note = document.getElementById('sector-note');
   if (note) {
-    if (coverage != null && coverage < 0.85) {
+    if (coverage != null && coverage < COVERAGE_FLOOR) {
       note.hidden = false;
       note.textContent =
         `Répartition sectorielle partielle : seulement ${(coverage * 100).toFixed(0)} % du total est ventilé par secteur. ` +
@@ -420,11 +394,6 @@ export function setProgress(ratio, label) {
     eta = lastEtaLabel;
   }
   document.getElementById('progress-label').textContent = label + eta;
-}
-
-export function hideProgress() {
-  document.getElementById('progress').hidden = true;
-  progressStart = 0;
 }
 
 export function showError(msg, title = 'Comparaison indisponible') {
@@ -624,7 +593,7 @@ export function setRayonCount(n) {
 export function renderLimitedPanelWarning(n, scope, regionsByCode, deptsByCode) {
   const el = document.getElementById('comparables-warning');
   if (!el) return;
-  if (n >= 5) {
+  if (n >= N_RECOMMENDED) {
     el.hidden = true;
     el.textContent = '';
     return;
@@ -645,8 +614,8 @@ export function renderLimitedPanelWarning(n, scope, regionsByCode, deptsByCode) 
 
   el.hidden = false;
   el.innerHTML =
-    `<strong>Sélection limitée — ${n} commune${n > 1 ? 's' : ''} comparable${n > 1 ? 's' : ''}.</strong> ` +
-    `En dessous de 5 communes comparables, les écarts à la médiane peuvent être influencés ` +
+    `<strong>Sélection limitée — ${fmtCommunesComparables(n)}.</strong> ` +
+    `En dessous de ${N_RECOMMENDED} communes comparables, les écarts à la médiane peuvent être influencés ` +
     `par un seul cas atypique. À interpréter avec prudence. ${suggestion}`;
 }
 
@@ -654,7 +623,6 @@ export function renderLimitedPanelWarning(n, scope, regionsByCode, deptsByCode) 
 export function renderScopeBadge(scope, target, n, regionsByCode, deptsByCode) {
   const dept = deptsByCode?.get?.(target.dept);
   const region = regionsByCode?.get?.(target.codeRegion);
-  const tail = `${target.population.toLocaleString('fr-FR')} habitants · ${n} communes comparables`;
 
   // 1. Card cible — meta enrichie
   const meta = document.getElementById('target-meta');
@@ -662,59 +630,47 @@ export function renderScopeBadge(scope, target, n, regionsByCode, deptsByCode) {
     const parts = [`Département ${dept?.nom || target.dept} (${target.dept})`];
     if (region) parts.push(`Région ${region.nom}`);
     parts.push(`${target.population.toLocaleString('fr-FR')} habitants`);
-    parts.push(`n = ${n} communes comparables`);
+    parts.push(`n = ${fmtCommunesComparables(n)}`);
     meta.textContent = parts.join(' · ');
   }
 
   // 2. Card comparables — H2 enrichi
   const h2 = document.getElementById('comparables-h2');
   if (h2) {
-    let scopeLabel;
-    if (scope.kind === 'national')         scopeLabel = 'Toute la France';
-    else if (scope.kind === 'region') {
-      const r = regionsByCode?.get?.(scope.value);
-      scopeLabel = `Région ${r?.nom || scope.value}`;
-    }
-    else if (scope.kind === 'departement') {
-      const d = deptsByCode?.get?.(scope.value);
-      scopeLabel = `Département ${d?.nom || ''} (${scope.value})`;
-    }
-    else if (scope.kind === 'distance')    scopeLabel = `Rayon ${scope.value} km`;
-    h2.textContent = `Communes comparables — ${scopeLabel} · n = ${n}`;
+    h2.textContent = `Communes comparables — ${scopeLabel(scope, regionsByCode, deptsByCode)} · n = ${n}`;
   }
 }
 
-export function setStaleResults(stale) {
-  document.querySelectorAll('#results .card').forEach(card => {
-    if (stale) card.classList.add('is-stale');
-    else card.classList.remove('is-stale');
-  });
-}
-
-// Sticky banner : visible quand l'utilisateur scrolle hors de la card recherche
-// ET que les résultats sont visibles. Affiche cible + zone + lien « Changer ↑ ».
+// Sticky banner : prend le relais du bloc de recherche ou de la barre
+// récapitulative — l'un ou l'autre est affiché — quand celui-ci sort de
+// l'écran, et seulement si des résultats sont visibles. Un élément masqué
+// (`hidden`) n'intersecte jamais : le bloc de recherche, replié après chaque
+// analyse, ne peut donc pas servir seul de repère. Affiche cible + zone +
+// lien « Changer ↑ ».
 let stickyObserver = null;
 export function setupStickyBanner({ onChange } = {}) {
   const banner = document.getElementById('sticky-banner');
   const search = document.getElementById('search');
-  if (!banner || !search) return;
+  const summary = document.getElementById('search-summary');
+  if (!banner || !search || !summary) return;
 
+  const inView = new Map();
   if (stickyObserver) stickyObserver.disconnect();
   stickyObserver = new IntersectionObserver(entries => {
-    for (const entry of entries) {
-      const resultsVisible = !document.getElementById('results').hidden;
-      const visible = !entry.isIntersecting && resultsVisible;
-      banner.hidden = false;
-      banner.classList.toggle('is-visible', visible);
-      banner.setAttribute('aria-hidden', visible ? 'false' : 'true');
-      // `inert` retire le banner du flux de tabulation et du calque AT quand
-      // il est masqué — sinon Shift+Tab depuis le haut atteint un bouton
-      // visuellement invisible (anti-pattern WCAG 4.1.2).
-      if (visible) banner.removeAttribute('inert');
-      else         banner.setAttribute('inert', '');
-    }
+    for (const entry of entries) inView.set(entry.target, entry.isIntersecting);
+    const resultsVisible = !document.getElementById('results').hidden;
+    const visible = resultsVisible && !inView.get(search) && !inView.get(summary);
+    banner.hidden = false;
+    banner.classList.toggle('is-visible', visible);
+    banner.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    // `inert` retire le banner du flux de tabulation et du calque AT quand
+    // il est masqué — sinon Shift+Tab depuis le haut atteint un bouton
+    // visuellement invisible (anti-pattern WCAG 4.1.2).
+    if (visible) banner.removeAttribute('inert');
+    else         banner.setAttribute('inert', '');
   }, { threshold: 0, rootMargin: '-60px 0px 0px 0px' });
   stickyObserver.observe(search);
+  stickyObserver.observe(summary);
 
   document.getElementById('sticky-change').onclick = () => {
     if (onChange) onChange();
@@ -732,19 +688,7 @@ export function showSearchSummary(target, scope, regionsByCode, deptsByCode) {
   const armPrefix = target.isArm ? 'Arr. mun. ' : '';
   document.getElementById('summary-target-name').textContent =
     `${armPrefix}${target.name} (${target.code})`;
-
-  let scopeLabel = '';
-  if (!scope || scope.kind === 'national') scopeLabel = 'Toute la France';
-  else if (scope.kind === 'region') {
-    const r = regionsByCode?.get?.(scope.value);
-    scopeLabel = `Région ${r?.nom || scope.value}`;
-  } else if (scope.kind === 'departement') {
-    const d = deptsByCode?.get?.(scope.value);
-    scopeLabel = `Département ${scope.value}${d?.nom ? ' — ' + d.nom : ''}`;
-  } else if (scope.kind === 'distance') {
-    scopeLabel = `Rayon ${scope.value} km`;
-  }
-  document.getElementById('summary-scope').textContent = scopeLabel;
+  document.getElementById('summary-scope').textContent = scopeLabel(scope, regionsByCode, deptsByCode);
 
   search.hidden = true;
   summary.hidden = false;
@@ -854,17 +798,5 @@ export function updateStickyBanner(target, scope, regionsByCode, deptsByCode) {
   const armPrefix = target.isArm ? 'Arr. mun. ' : '';
   document.getElementById('sticky-target-name').textContent =
     `${armPrefix}${target.name}`;
-
-  let scopeLabel = '';
-  if (!scope || scope.kind === 'national') scopeLabel = 'Toute la France';
-  else if (scope.kind === 'region') {
-    const r = regionsByCode?.get?.(scope.value);
-    scopeLabel = `Région ${r?.nom || scope.value}`;
-  } else if (scope.kind === 'departement') {
-    const d = deptsByCode?.get?.(scope.value);
-    scopeLabel = `Dépt ${scope.value}${d?.nom ? ' — ' + d.nom : ''}`;
-  } else if (scope.kind === 'distance') {
-    scopeLabel = `Rayon ${scope.value} km`;
-  }
-  document.getElementById('sticky-scope').textContent = scopeLabel;
+  document.getElementById('sticky-scope').textContent = scopeLabel(scope, regionsByCode, deptsByCode);
 }

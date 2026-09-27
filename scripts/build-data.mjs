@@ -1,13 +1,13 @@
 // Build script — exécute le pull Insee complet et écrit l'artefact compact
 // `data/communes-2024.json` que le front-end charge en un seul fetch (au lieu
-// de pré-télécharger 80 MB de ZIP CSV pour finalement n'en garder que ~5 MB).
+// de pré-télécharger 80 MB de ZIP CSV pour finalement n'en garder que ~13 MB).
 //
 // Usage : node scripts/build-data.mjs
 // Régénération annuelle prévue via .github/workflows/build-data.yml
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
-import { pullAll, STOCK_YEAR, DATA_VERSION } from '../js/insee-api.js';
+import { pullAll, STOCK_YEAR, DATA_VERSION, ARTEFACT_PATH, sameArtefactContent } from '../js/insee-api.js';
 
 const t0 = Date.now();
 let lastLog = 0;
@@ -34,13 +34,21 @@ try {
     departements,
     records
   };
+  const path = ARTEFACT_PATH;
+
+  // Contenu inchangé : on garde la date du build précédent, pour que le
+  // fichier reste identique et que le workflow n'ait rien à commiter.
+  let previous = null;
+  try { previous = JSON.parse(readFileSync(path, 'utf8')); } catch { /* premier build */ }
+  const unchanged = sameArtefactContent(previous, out);
+  if (unchanged) out.builtAt = previous.builtAt;
+
   const json = JSON.stringify(out);
-  const path = 'data/communes-2024.json';
   writeFileSync(path, json);
 
   const rawMb = (json.length / 1024 / 1024).toFixed(2);
   const gzMb  = (gzipSync(json).length / 1024 / 1024).toFixed(2);
-  process.stderr.write(`\n✓ Écrit ${path}\n`);
+  process.stderr.write(`\n✓ Écrit ${path}${unchanged ? ' — contenu inchangé, date de build conservée' : ''}\n`);
   process.stderr.write(`  ${records.length.toLocaleString('fr-FR')} communes\n`);
   process.stderr.write(`  ${rawMb} MB brut · ~${gzMb} MB gzip wire\n`);
   process.stderr.write(`  Total : ${((Date.now() - t0) / 1000).toFixed(1)}s\n`);
