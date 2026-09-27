@@ -824,6 +824,11 @@ button { font-family: inherit; }
   margin: 0 0 var(--space-1);
   font-size: clamp(1.4rem, 2.8vw, 1.9rem);
 }
+/* Titres rendus focusables par script (tabindex="-1") pour annoncer un
+   résultat ou une erreur aux lecteurs d'écran : ce ne sont pas des éléments
+   interactifs, le cadre de focus n'y a pas d'objet (il reste sur les
+   boutons, liens et champs). */
+h2[tabindex="-1"]:focus { outline: none; }
 
 .indicators {
   display: grid;

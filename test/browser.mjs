@@ -273,6 +273,21 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.equal(await evaluate(`!!document.getElementById('theoretical-gap')`), false);
   });
 
+  test('S17 focus sur le titre de la commune sans cadre ; un élément atteint au clavier garde le sien', async () => {
+    const focus = () => evaluate(`(() => {
+      const e = document.activeElement;
+      return { id: e.id, cls: e.className, outline: getComputedStyle(e).outlineStyle };
+    })()`);
+    assert.deepEqual(await focus(), { id: 'target-name', cls: '', outline: 'none' });
+    // Maj+Tab remonte au bouton « Modifier ↑ », qui doit garder le cadre global.
+    for (const type of ['keyDown', 'keyUp']) {
+      await cdp.send('Input.dispatchKeyEvent', { type, key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers: 8 });
+    }
+    const prev = await focus();
+    assert.equal(prev.id, 'btn-modify');
+    assert.notEqual(prev.outline, 'none', 'bouton « Modifier ↑ » sans cadre de focus');
+  });
+
   test('S16 accessibilité : barres sectorielles exposées comme images nommées', async () => {
     const bars = await evaluate(`[...document.querySelectorAll('#sector-chart .sector-bars')]
       .map(b => ({ role: b.getAttribute('role'), label: b.getAttribute('aria-label') }))`);
