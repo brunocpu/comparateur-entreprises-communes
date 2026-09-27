@@ -23,7 +23,7 @@ function csvEscape(s) {
 }
 
 const SEP = ';';
-const SOURCES = `# Sources : Insee Side (démographie d'entreprises), populations légales du Recensement (LOV2). geo.api.gouv.fr.`;
+const SOURCES = `# Sources : Insee Side (démographie d'entreprises), populations de référence du Recensement (LOV2). geo.api.gouv.fr.`;
 const todayFr = () => new Date().toLocaleDateString('fr-FR');
 
 // En-tête avec accents + colonne Type pour distinguer cible / comparables / quartiles

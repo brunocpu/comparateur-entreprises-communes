@@ -9,7 +9,7 @@ Deux modes d'usage :
 
 ## Pourquoi cet outil
 
-Les données Insee sur la démographie d'entreprises (fichier Side, populations légales) sont riches mais dispersées : trois jeux à rapprocher, plusieurs millésimes, une nomenclature sectorielle agrégée, des règles de secret statistique à respecter. Pour un usage ponctuel — positionner rapidement une commune par rapport à des comparables crédibles — la barre d'entrée est disproportionnée.
+Les données Insee sur la démographie d'entreprises (fichier Side, populations de référence) sont riches mais dispersées : trois jeux à rapprocher, plusieurs millésimes, une nomenclature sectorielle agrégée, des règles de secret statistique à respecter. Pour un usage ponctuel — positionner rapidement une commune par rapport à des comparables crédibles — la barre d'entrée est disproportionnée.
 
 Cet outil rend l'exercice immédiat. À partir d'une commune cible, il sélectionne automatiquement dix communes comparables sur taille démographique (±25 %) et proximité de profil sectoriel A10, et restitue le positionnement de la cible sur quatre indicateurs : entreprises actives, densité pour 1 000 habitants, croissance 2014→2024, créations annuelles. Le mode « plusieurs communes » permet une comparaison libre, sans contrainte de strate, pour confronter des voisines ou des profils contrastés.
 
@@ -247,7 +247,7 @@ Non couverts par l'audit automatique : tests utilisateurs NVDA / VoiceOver, navi
 ## Limitations méthodologiques
 
 - Une commune correspond à son **territoire administratif**, pas à un bassin de vie ou une aire d'attraction (notions Insee plus larges qui regroupent plusieurs communes liées par l'emploi et les déplacements).
-- Population « 2023 » = population légale en vigueur au 1<sup>er</sup> janvier 2026, établie à partir des cinq enquêtes annuelles de recensement les plus récentes et rapportée au 1<sup>er</sup> janvier 2023.
+- Population « 2023 » = population de référence en vigueur au 1<sup>er</sup> janvier 2026, établie à partir des cinq enquêtes annuelles de recensement les plus récentes et rapportée au 1<sup>er</sup> janvier 2023.
 - Les unités légales sont rattachées à leur commune d'**implantation administrative** (siège social), pas à leur lieu d'activité opérationnelle. Effet « Paris / La Défense » : les communes-sièges sur-représentées vs les communes résidentielles sous-représentées.
 - Créations 2025 incluent les **micro-entrepreneurs**.
 - Croissance 2014→2024 traverse plusieurs évolutions méthodologiques Insee (refonte du répertoire des entreprises, généralisation du statut de micro-entrepreneur). Comparabilité dans le temps affectée.
@@ -259,7 +259,7 @@ Non couverts par l'audit automatique : tests utilisateurs NVDA / VoiceOver, navi
 
 ## Sources & licence
 
-- **Données** : [Insee — Système d'information sur la démographie d'entreprises (Side)](https://www.insee.fr/fr/metadonnees/source/serie/s2120) et populations légales du Recensement de la population. Licence Ouverte version 2.0 (LOV2).
+- **Données** : [Insee — Système d'information sur la démographie d'entreprises (Side)](https://www.insee.fr/fr/metadonnees/source/serie/s2120) et populations de référence du Recensement de la population. Licence Ouverte version 2.0 (LOV2).
 - **Référentiel géographique** : [API Découpage administratif — geo.api.gouv.fr](https://geo.api.gouv.fr/decoupage-administratif), LOV2.
 - **Code source** : MIT.
 - **Typographies** : Fraunces (SIL OFL), Geist Sans + Mono (SIL OFL), via Google Fonts.
