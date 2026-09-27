@@ -1,6 +1,6 @@
 import * as cache from './cache.js';
 import { pullAll, DATA_VERSION, ARTEFACT_PATH, checkArtefact } from './insee-api.js';
-import { findComparables, summarizeComparables, countInRadius } from './matching.js';
+import { findComparables, summarizeComparables, countInRadius, POP_FLOOR_FOR_MATCHING } from './matching.js';
 import * as ui from './ui.js';
 import { exportCsv, exportMultiCsv } from './export.js';
 import { fmtDate } from './format.js';
@@ -75,7 +75,7 @@ async function tryLoadBundledData() {
     // res.json() laisse le moteur streamer en interne — empreinte mémoire
     // ~3× plus faible qu'une accumulation de chunks → Blob → text → JSON.parse,
     // au prix d'une barre de progression non granulaire pendant le download.
-    // Acceptable : artefact de ~2,3 MB gzip, quelques secondes en Wi-Fi.
+    // Acceptable : artefact de ~2,5 MB gzip, quelques secondes en Wi-Fi.
     ui.setProgress(0.6, 'Décodage…');
     const data = await res.json();
     const problem = checkArtefact(data);
@@ -202,7 +202,7 @@ async function loadFromCache() {
 
   // Migration : pull réalisé avant la v2 du sélecteur de scope → les listes
   // régions/départements n'étaient pas en cache. On les récupère à la volée
-  // (~5 KB, ~200 ms) pour éviter à l'utilisateur de re-pull les 67 MB.
+  // (~5 KB, ~200 ms) pour éviter à l'utilisateur de re-pull les ~80 MB.
   if (!state.regions.length || !state.departements.length) {
     try {
       const [regions, departements] = await Promise.all([
@@ -466,8 +466,8 @@ function runAnalysis(target) {
   if (result.reason === 'pop_floor') {
     ui.showError(
       `${target.name} compte ${target.population.toLocaleString('fr-FR')} habitants. ` +
-      `En dessous de 2 000 habitants, 1 ou 2 sièges sociaux suffisent à déformer le total des entreprises actives, ` +
-      `et l'Insee masque la plupart des chiffres détaillés pour préserver l'anonymat.`,
+      `En dessous de ${POP_FLOOR_FOR_MATCHING.toLocaleString('fr-FR')} habitants, un ou deux sièges sociaux suffisent ` +
+      `à déformer le total des entreprises actives et leur répartition par secteur.`,
       'Comparaison indisponible — commune trop petite'
     );
     document.getElementById('results').hidden = true;

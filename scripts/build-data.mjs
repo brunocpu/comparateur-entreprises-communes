@@ -1,6 +1,6 @@
 // Build script — exécute le pull Insee complet et écrit l'artefact compact
 // `data/communes-2024.json` que le front-end charge en un seul fetch (au lieu
-// de pré-télécharger 80 MB de ZIP CSV pour finalement n'en garder que ~5 MB).
+// de pré-télécharger 80 MB de ZIP CSV pour finalement n'en garder que ~13 MB).
 //
 // Usage : node scripts/build-data.mjs
 // Régénération annuelle prévue via .github/workflows/build-data.yml

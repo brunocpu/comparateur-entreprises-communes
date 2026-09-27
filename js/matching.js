@@ -2,7 +2,7 @@
 //
 // Filtres durs :
 //   - Population : bande ratio [target/1.25 ; target×1.25] (asymétrique mais
-//     stable en log-échelle ; recommandation Insee statisticien).
+//     stable en log-échelle).
 //   - sectorialCoverage ≥ 95 %, qui revient en pratique à écarter les communes
 //     sans aucune unité légale : l'Insee ne masque aucune cellule sectorielle,
 //     la couverture vaut donc 1 ou 0 (voir le commentaire dans insee-api.js).

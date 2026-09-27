@@ -420,3 +420,27 @@ describe('artefact : comparaison de contenu (build annuel)', () => {
     assert.equal(api.sameArtefactContent(null, a), false);
   });
 });
+
+// ---------- cohérence des textes avec les millésimes du code ----------
+
+describe('textes : millésimes conformes aux constantes', () => {
+  const { STOCK_BASELINE_YEAR, STOCK_YEAR, OBSERVATION_YEARS } = api;
+  const files = ['index.html', 'README.md', 'js/ui.js', 'js/export.js'];
+  const read = f => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+
+  for (const f of files) {
+    test(`${f} : croissance ${STOCK_BASELINE_YEAR}→${STOCK_YEAR}`, () => {
+      const found = [...read(f).matchAll(/[Cc]roissance (\d{4}) ?→ ?(\d{4})/g)].map(m => `${m[1]}→${m[2]}`);
+      assert.deepEqual(found.filter(x => x !== `${STOCK_BASELINE_YEAR}→${STOCK_YEAR}`), []);
+    });
+    test(`${f} : créations ${OBSERVATION_YEARS.creations}`, () => {
+      const found = [...read(f).matchAll(/[Cc]réations (?:d'entreprises )?(\d{4})/g)].map(m => m[1]);
+      assert.deepEqual(found.filter(y => y !== OBSERVATION_YEARS.creations), []);
+    });
+  }
+
+  test('index.html : millésimes du pied de page', () => {
+    const { populations, stocks, creations } = OBSERVATION_YEARS;
+    assert.match(read('index.html'), new RegExp(`population ${populations}, entreprises ${stocks}, créations ${creations}`));
+  });
+});

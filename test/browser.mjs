@@ -316,6 +316,17 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.equal((pdf.match(/\/Type\s*\/Page(?![s\w])/g) || []).length, 1);
   });
 
+  test('S15 commune sous le plancher de 2 000 habitants : message explicite', async () => {
+    if (!(await isHidden('#search-summary'))) await click('#btn-modify');
+    await pickCommune('#commune-input', '#autocomplete', 'Arthémonay', '26014');
+    await waitUntil(`!document.getElementById('errors').hidden`, 5000, 'message d\'erreur');
+    assert.equal(norm(await text('#error-title')), 'Comparaison indisponible — commune trop petite');
+    const message = norm(await text('#error-message'));
+    assert.match(message, /^Arthémonay compte 613 habitants\. En dessous de 2 000 habitants, un ou deux sièges sociaux/);
+    assert.doesNotMatch(message, /anonymat|masque/);
+    assert.equal(await isHidden('#results'), true);
+  });
+
   test('S5 « Plusieurs communes » : ajout, retrait, tableau', async () => {
     await click('#tab-multi');
     await pickCommune('#multi-input', '#multi-autocomplete', 'Romans-sur', '26281');

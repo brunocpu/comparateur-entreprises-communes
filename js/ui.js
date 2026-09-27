@@ -1,4 +1,4 @@
-import { A10_SECTORS, SECTOR_LABELS, SECTOR_DETAILS } from './insee-api.js';
+import { A10_SECTORS, SECTOR_LABELS, SECTOR_DETAILS, STOCK_BASELINE_YEAR, STOCK_YEAR } from './insee-api.js';
 import { fmtInt, fmtDec1, fmtPct, fmtPctSigned, fmtDeltaVsMedian, fmtPointsVsMedian, fmtCommunesComparables, scopeLabel } from './format.js';
 import { escapeHtml } from './util.js';
 
@@ -176,7 +176,7 @@ function setIndicator(key, value, delta, fmtDelta) {
 const BULLET_LABELS = {
   stock:   { noun: 'entreprises actives',         fmt: fmtInt },
   density: { noun: 'entreprises pour 1 000 hab.', fmt: fmtDec1 },
-  growth:  { noun: 'croissance 2014→2024',        fmt: fmtPct },
+  growth:  { noun: `croissance ${STOCK_BASELINE_YEAR}→${STOCK_YEAR}`, fmt: fmtPct },
   crea:    { noun: 'créations par an',            fmt: fmtInt }
 };
 function renderBullet(key, target, stat) {
