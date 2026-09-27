@@ -32,6 +32,26 @@ export function fmtPointsVsMedian(v) {
   return `${pt1.format(pts)} ${Math.abs(pts) >= 2 ? 'points' : 'point'} d'écart avec la médiane`;
 }
 
+// Désignation de la zone de comparaison, identique partout où elle s'affiche
+// (barre récapitulative, bandeau, titre du tableau, export CSV). Repli sur le
+// code quand les référentiels régions/départements ne sont pas disponibles.
+export function scopeLabel(scope, regionsByCode, deptsByCode) {
+  if (!scope || scope.kind === 'national') return 'Toute la France';
+  if (scope.kind === 'region') {
+    const r = regionsByCode?.get?.(scope.value);
+    return `Région ${r?.nom || scope.value}`;
+  }
+  if (scope.kind === 'departement') {
+    const d = deptsByCode?.get?.(scope.value);
+    return d?.nom ? `Département ${d.nom} (${scope.value})` : `Département ${scope.value}`;
+  }
+  if (scope.kind === 'distance') return `Rayon ${scope.value} km`;
+  return '';
+}
+
+export const fmtCommunesComparables = n =>
+  n > 1 ? `${n} communes comparables` : `${n} commune comparable`;
+
 export function fmtDate(ts) {
   if (!ts) return '—';
   return new Date(ts).toLocaleDateString('fr-FR', {

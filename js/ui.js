@@ -1,5 +1,5 @@
 import { A10_SECTORS, SECTOR_LABELS, SECTOR_DETAILS } from './insee-api.js';
-import { fmtInt, fmtDec1, fmtPct, fmtDeltaVsMedian, fmtPointsVsMedian } from './format.js';
+import { fmtInt, fmtDec1, fmtPct, fmtPctSigned, fmtDeltaVsMedian, fmtPointsVsMedian, fmtCommunesComparables, scopeLabel } from './format.js';
 import { escapeHtml } from './util.js';
 
 // Respect du paramètre système « réduire les animations » (RGAA 13.x).
@@ -135,10 +135,7 @@ export function renderTarget(target, summary) {
   const nameEl = document.getElementById('target-name');
   const armPrefix = target.isArm ? 'Arrondissement municipal — ' : '';
   nameEl.textContent = `${armPrefix}${target.name} (${target.code})`;
-
-  document.getElementById('target-meta').textContent =
-    `Département ${target.dept} — population ${fmtInt(target.population)} habitants` +
-    ` · ${summary.summary.n} communes comparables`;
+  // La ligne `target-meta` est rédigée par renderScopeBadge, qui connaît la zone.
 
   setIndicator('stock',   fmtInt(target.stock),         summary.delta.stock,     fmtDeltaVsMedian);
   setIndicator('density', fmtDec1(target.density),      summary.delta.density,   fmtDeltaVsMedian);
@@ -158,12 +155,9 @@ export function renderTarget(target, summary) {
   const dDelta = summary.delta.density;
   if (dDelta == null) {
     gapEl.textContent = '';
-  } else if (dDelta > 0) {
+  } else if (dDelta !== 0) {
     gapEl.textContent =
-      `Nombre d'entreprises pour 1 000 habitants : +${(dDelta * 100).toFixed(1)} % par rapport à la médiane des communes comparables.`;
-  } else if (dDelta < 0) {
-    gapEl.textContent =
-      `Nombre d'entreprises pour 1 000 habitants : ${(dDelta * 100).toFixed(1)} % par rapport à la médiane des communes comparables.`;
+      `Nombre d'entreprises pour 1 000 habitants : ${fmtPctSigned(dDelta)} par rapport à la médiane des communes comparables.`;
   } else {
     gapEl.textContent = `Nombre d'entreprises pour 1 000 habitants aligné sur la médiane des comparables.`;
   }
@@ -638,7 +632,7 @@ export function renderLimitedPanelWarning(n, scope, regionsByCode, deptsByCode) 
 
   el.hidden = false;
   el.innerHTML =
-    `<strong>Sélection limitée — ${n} commune${n > 1 ? 's' : ''} comparable${n > 1 ? 's' : ''}.</strong> ` +
+    `<strong>Sélection limitée — ${fmtCommunesComparables(n)}.</strong> ` +
     `En dessous de 5 communes comparables, les écarts à la médiane peuvent être influencés ` +
     `par un seul cas atypique. À interpréter avec prudence. ${suggestion}`;
 }
@@ -647,7 +641,6 @@ export function renderLimitedPanelWarning(n, scope, regionsByCode, deptsByCode) 
 export function renderScopeBadge(scope, target, n, regionsByCode, deptsByCode) {
   const dept = deptsByCode?.get?.(target.dept);
   const region = regionsByCode?.get?.(target.codeRegion);
-  const tail = `${target.population.toLocaleString('fr-FR')} habitants · ${n} communes comparables`;
 
   // 1. Card cible — meta enrichie
   const meta = document.getElementById('target-meta');
@@ -655,25 +648,14 @@ export function renderScopeBadge(scope, target, n, regionsByCode, deptsByCode) {
     const parts = [`Département ${dept?.nom || target.dept} (${target.dept})`];
     if (region) parts.push(`Région ${region.nom}`);
     parts.push(`${target.population.toLocaleString('fr-FR')} habitants`);
-    parts.push(`n = ${n} communes comparables`);
+    parts.push(`n = ${fmtCommunesComparables(n)}`);
     meta.textContent = parts.join(' · ');
   }
 
   // 2. Card comparables — H2 enrichi
   const h2 = document.getElementById('comparables-h2');
   if (h2) {
-    let scopeLabel;
-    if (scope.kind === 'national')         scopeLabel = 'Toute la France';
-    else if (scope.kind === 'region') {
-      const r = regionsByCode?.get?.(scope.value);
-      scopeLabel = `Région ${r?.nom || scope.value}`;
-    }
-    else if (scope.kind === 'departement') {
-      const d = deptsByCode?.get?.(scope.value);
-      scopeLabel = `Département ${d?.nom || ''} (${scope.value})`;
-    }
-    else if (scope.kind === 'distance')    scopeLabel = `Rayon ${scope.value} km`;
-    h2.textContent = `Communes comparables — ${scopeLabel} · n = ${n}`;
+    h2.textContent = `Communes comparables — ${scopeLabel(scope, regionsByCode, deptsByCode)} · n = ${n}`;
   }
 }
 
@@ -731,19 +713,7 @@ export function showSearchSummary(target, scope, regionsByCode, deptsByCode) {
   const armPrefix = target.isArm ? 'Arr. mun. ' : '';
   document.getElementById('summary-target-name').textContent =
     `${armPrefix}${target.name} (${target.code})`;
-
-  let scopeLabel = '';
-  if (!scope || scope.kind === 'national') scopeLabel = 'Toute la France';
-  else if (scope.kind === 'region') {
-    const r = regionsByCode?.get?.(scope.value);
-    scopeLabel = `Région ${r?.nom || scope.value}`;
-  } else if (scope.kind === 'departement') {
-    const d = deptsByCode?.get?.(scope.value);
-    scopeLabel = `Département ${scope.value}${d?.nom ? ' — ' + d.nom : ''}`;
-  } else if (scope.kind === 'distance') {
-    scopeLabel = `Rayon ${scope.value} km`;
-  }
-  document.getElementById('summary-scope').textContent = scopeLabel;
+  document.getElementById('summary-scope').textContent = scopeLabel(scope, regionsByCode, deptsByCode);
 
   search.hidden = true;
   summary.hidden = false;
@@ -853,17 +823,5 @@ export function updateStickyBanner(target, scope, regionsByCode, deptsByCode) {
   const armPrefix = target.isArm ? 'Arr. mun. ' : '';
   document.getElementById('sticky-target-name').textContent =
     `${armPrefix}${target.name}`;
-
-  let scopeLabel = '';
-  if (!scope || scope.kind === 'national') scopeLabel = 'Toute la France';
-  else if (scope.kind === 'region') {
-    const r = regionsByCode?.get?.(scope.value);
-    scopeLabel = `Région ${r?.nom || scope.value}`;
-  } else if (scope.kind === 'departement') {
-    const d = deptsByCode?.get?.(scope.value);
-    scopeLabel = `Dépt ${scope.value}${d?.nom ? ' — ' + d.nom : ''}`;
-  } else if (scope.kind === 'distance') {
-    scopeLabel = `Rayon ${scope.value} km`;
-  }
-  document.getElementById('sticky-scope').textContent = scopeLabel;
+  document.getElementById('sticky-scope').textContent = scopeLabel(scope, regionsByCode, deptsByCode);
 }

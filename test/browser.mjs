@@ -263,6 +263,15 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.equal(await evaluate(`document.querySelectorAll('#comparables-table tbody tr').length`), 2);
   });
 
+  test('S2b libellés : zone désignée partout de la même façon, accords, virgule décimale', async () => {
+    const zone = 'Département Drôme (26)';
+    assert.equal(norm(await text('#summary-scope')), zone);
+    assert.equal(norm(await text('#sticky-scope')), zone);
+    assert.equal(norm(await text('#comparables-h2')), `Communes comparables — ${zone} · n = 1`);
+    assert.match(norm(await text('#target-meta')), /n = 1 commune comparable$/);
+    assert.match(norm(await text('#theoretical-gap')), /^Nombre d'entreprises pour 1 000 habitants : [-−]13,4 % par rapport/);
+  });
+
   test('S9 écarts à la médiane sans « % % » ni pourcentage pour la croissance', async () => {
     for (const id of ['stock', 'density', 'crea']) {
       assert.doesNotMatch(norm(await text(`#ind-${id}-delta`)), /%\s*%/, `#ind-${id}-delta`);
