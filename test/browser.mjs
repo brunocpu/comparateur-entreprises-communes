@@ -272,6 +272,16 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.match(norm(await text('#theoretical-gap')), /^Nombre d'entreprises pour 1 000 habitants : [-−]13,4 % par rapport/);
   });
 
+  test('S16 accessibilité : barres sectorielles exposées comme images nommées', async () => {
+    const bars = await evaluate(`[...document.querySelectorAll('#sector-chart .sector-bars')]
+      .map(b => ({ role: b.getAttribute('role'), label: b.getAttribute('aria-label') }))`);
+    assert.equal(bars.length, 9);
+    for (const b of bars) {
+      assert.equal(b.role, 'img');
+      assert.match(b.label, /^part sectorielle .+ : cible .+, médiane .+/);
+    }
+  });
+
   test('S9 écarts à la médiane sans « % % » ni pourcentage pour la croissance', async () => {
     for (const id of ['stock', 'density', 'crea']) {
       assert.doesNotMatch(norm(await text(`#ind-${id}-delta`)), /%\s*%/, `#ind-${id}-delta`);
@@ -316,6 +326,27 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.equal((pdf.match(/\/Type\s*\/Page(?![s\w])/g) || []).length, 1);
   });
 
+  test('S13b impression : source, licence et millésimes mentionnés, note méthodologique omise', async () => {
+    await cdp.send('Emulation.setEmulatedMedia', { media: 'print' });
+    try {
+      const r = await evaluate(`(() => {
+        const f = document.querySelector('.app-footer');
+        return {
+          footer: getComputedStyle(f).display,
+          methodo: getComputedStyle(f.querySelector('.methodo')).display,
+          text: f.innerText
+        };
+      })()`);
+      assert.notEqual(r.footer, 'none');
+      assert.equal(r.methodo, 'none');
+      assert.match(norm(r.text), /Insee/);
+      assert.match(norm(r.text), /Licence Ouverte/);
+      assert.match(norm(r.text), /population \d{4}, entreprises \d{4}, créations \d{4}/);
+    } finally {
+      await cdp.send('Emulation.setEmulatedMedia', { media: '' });
+    }
+  });
+
   test('S15 commune sous le plancher de 2 000 habitants : message explicite', async () => {
     if (!(await isHidden('#search-summary'))) await click('#btn-modify');
     await pickCommune('#commune-input', '#autocomplete', 'Arthémonay', '26014');
@@ -338,6 +369,19 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     assert.equal(await isHidden('#btn-multi-export'), true);
     await pickCommune('#multi-input', '#multi-autocomplete', 'Romans-sur', '26281');
     assert.equal(await isHidden('#btn-multi-export'), false);
+  });
+
+  test('S5b suggestions : identifiants propres à chaque liste', async () => {
+    await typeInto('#multi-input', 'Lyon');
+    try {
+      await waitUntil(`document.querySelectorAll('#multi-autocomplete li').length > 0`, 5000, 'suggestions');
+      const ids = await evaluate(`[...document.querySelectorAll('#multi-autocomplete li')].map(li => li.id)`);
+      assert.ok(ids.every(id => id.startsWith('multi-autocomplete-opt-')), ids.join(', '));
+      assert.equal(await evaluate(`new Set([...document.querySelectorAll('[role="option"]')].map(o => o.id)).size
+        === document.querySelectorAll('[role="option"]').length`), true);
+    } finally {
+      await evaluate(`(() => { const i = document.getElementById('multi-input'); i.value = ''; i.dispatchEvent(new Event('input')); })()`);
+    }
   });
 
   test('S8 export CSV « Plusieurs communes »', async () => {

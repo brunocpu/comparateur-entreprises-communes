@@ -90,7 +90,6 @@ async function tryLoadBundledData() {
     await cache.bulkPut(data.records);
     await cache.setMeta('dataVersion', DATA_VERSION);
     await cache.setMeta('lastPullAt', data.builtAt ? Date.parse(data.builtAt) : Date.now());
-    await cache.setMeta('lastPullWarnings', data.warnings || []);
     await cache.setMeta('regions', data.regions || []);
     await cache.setMeta('departements', data.departements || []);
     ui.setProgress(1, `Terminé — ${data.records.length.toLocaleString('fr-FR')} communes chargées`);
@@ -151,25 +150,19 @@ async function doPull(refresh) {
   btnPull.disabled = true;
   btnRefresh.disabled = true;
 
-  const ctrl = new AbortController();
   try {
-    const { records, warnings, regions, departements } = await pullAll(({ ratio, label }) => ui.setProgress(ratio, label), ctrl.signal);
+    const { records, regions, departements } = await pullAll(({ ratio, label }) => ui.setProgress(ratio, label));
     if (!records.length) throw new Error('Aucune donnée téléchargée — vérifier la connexion ou l\'API Insee.');
-    // Purge après le pull, jamais avant : un échec réseau laissait jusqu'ici
-    // le visiteur sans données jusqu'au rechargement de la page.
+    // Purge après le pull, jamais avant : en cas d'échec réseau, les données
+    // en cache restent disponibles.
     await cache.clearAll();
     await cache.bulkPut(records);
     await cache.setMeta('dataVersion', DATA_VERSION);
     await cache.setMeta('lastPullAt', Date.now());
-    await cache.setMeta('lastPullWarnings', warnings);
     await cache.setMeta('regions', regions);
     await cache.setMeta('departements', departements);
     await loadFromCache();
-    const tail = warnings.length
-      ? ` — ${warnings.length} avertissement(s) (API Insee partielle, voir console).`
-      : '';
-    ui.setProgress(1, `Terminé — ${records.length.toLocaleString('fr-FR')} communes chargées${tail}`);
-    if (warnings.length) console.warn('Pull warnings:', warnings);
+    ui.setProgress(1, `Terminé — ${records.length.toLocaleString('fr-FR')} communes chargées`);
     showSearch();
   } catch (err) {
     console.error(err);
@@ -500,7 +493,6 @@ function runAnalysis(target) {
   ui.renderScopeBadge(result.scope, target, comparables.length, state.regionsByCode, state.departementsByCode);
   ui.updateStickyBanner(target, result.scope, state.regionsByCode, state.departementsByCode);
   ui.showSearchSummary(target, result.scope, state.regionsByCode, state.departementsByCode);
-  ui.setStaleResults(false);
 
   const resultsEl = document.getElementById('results');
   const wasHidden = resultsEl.hidden;
