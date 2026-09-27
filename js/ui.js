@@ -1,5 +1,5 @@
 import { A10_SECTORS, SECTOR_LABELS, SECTOR_DETAILS } from './insee-api.js';
-import { fmtInt, fmtDec1, fmtPct, fmtPctSigned } from './format.js';
+import { fmtInt, fmtDec1, fmtPct, fmtDeltaVsMedian, fmtPointsVsMedian } from './format.js';
 import { escapeHtml } from './util.js';
 
 // Respect du paramètre système « réduire les animations » (RGAA 13.x).
@@ -131,13 +131,6 @@ export function setupAutocomplete(input, listEl, getItems, onPick) {
 
 // ---------- target card ----------
 
-const DELTA_LABELS = {
-  stock:     '% par rapport à la médiane des comparables',
-  density:   '% par rapport à la médiane des comparables',
-  growth:    'points d\'écart avec la médiane',
-  crea:      '% par rapport à la médiane des comparables'
-};
-
 export function renderTarget(target, summary) {
   const nameEl = document.getElementById('target-name');
   const armPrefix = target.isArm ? 'Arrondissement municipal — ' : '';
@@ -147,10 +140,10 @@ export function renderTarget(target, summary) {
     `Département ${target.dept} — population ${fmtInt(target.population)} habitants` +
     ` · ${summary.summary.n} communes comparables`;
 
-  setIndicator('stock',   fmtInt(target.stock),         summary.delta.stock,     DELTA_LABELS.stock);
-  setIndicator('density', fmtDec1(target.density),      summary.delta.density,   DELTA_LABELS.density);
-  setIndicator('growth',  fmtPct(target.growth10y),     summary.delta.growth10y, DELTA_LABELS.growth);
-  setIndicator('crea',    fmtInt(target.creations),     summary.delta.creations, DELTA_LABELS.crea);
+  setIndicator('stock',   fmtInt(target.stock),         summary.delta.stock,     fmtDeltaVsMedian);
+  setIndicator('density', fmtDec1(target.density),      summary.delta.density,   fmtDeltaVsMedian);
+  setIndicator('growth',  fmtPct(target.growth10y),     summary.delta.growth10y, fmtPointsVsMedian);
+  setIndicator('crea',    fmtInt(target.creations),     summary.delta.creations, fmtDeltaVsMedian);
 
   // Bullet charts sous chaque indicateur : Q1—Q3 ribbon + médiane + cible
   renderBullet('stock',   target.stock,      summary.summary.stock);
@@ -176,11 +169,11 @@ export function renderTarget(target, summary) {
   }
 }
 
-function setIndicator(key, value, delta, suffix) {
+function setIndicator(key, value, delta, fmtDelta) {
   document.getElementById(`ind-${key}`).textContent = value;
   const d = document.getElementById(`ind-${key}-delta`);
   if (delta == null) { d.textContent = ''; d.className = 'indicator-delta'; return; }
-  d.textContent = `${fmtPctSigned(delta)} ${suffix}`;
+  d.textContent = fmtDelta(delta);
   d.className = 'indicator-delta ' + (delta >= 0 ? 'delta-pos' : 'delta-neg');
 }
 
