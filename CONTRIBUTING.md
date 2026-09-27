@@ -22,11 +22,14 @@ Premier chargement : si `data/communes-2024.json` est présent dans le dépôt, 
 
 ## Tests
 
-Deux niveaux :
+Trois niveaux :
 
 ```bash
-# Unitaires offline — pas de réseau, ~100 ms, à lancer à chaque modif d'un helper.
+# Unitaires + golden master — hors ligne, moins d'une seconde, avant chaque push.
 npm test
+
+# Parcours navigateur — Chrome headless, ~20 s, dès qu'on touche au front.
+npm run test:browser
 
 # Bout-en-bout réseau — pull complet API Insee + matching, ~35 s.
 npm run test:e2e
@@ -34,8 +37,17 @@ npm run test:e2e
 
 Les unitaires couvrent les helpers pures : `quantile`, `cosine`, `haversine`,
 `relDelta`, `summarizeComparables`, `findComparables`, `parseCsvLine`,
-`headerIndex`, `normalize`, `escapeHtml`, `fmtInt`/`fmtDec1`/`fmtPct`. Voir
+`headerIndex`, `normalize`, `escapeHtml`, formatteurs et libellés, contenu des
+exports CSV, contrôle de l'artefact, millésimes cités dans les textes. Voir
 `test/units.mjs`.
+
+Le golden master (`test/golden.mjs`) fige les résultats du matching sur
+l'artefact réel. S'il échoue, c'est qu'un résultat a changé : vérifier que
+c'est voulu, puis recapturer avec `npm run test:golden:update` dans le même
+commit que la modification.
+
+Les parcours navigateur (`test/browser.mjs`) demandent Node ≥ 22 et Chrome
+(variable `CHROME_PATH` si Chrome n'est pas à l'emplacement usuel).
 
 Le harness e2e (`test-pull.mjs`) vérifie l'extraction réelle depuis l'API
 Insee, à utiliser quand on touche à la pipeline réseau (`insee-api.js`,

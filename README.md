@@ -31,7 +31,7 @@ Public cible naturel : développeurs économiques de collectivités, agences de 
 - **Auto-recompute** au changement de zone dès qu'une commune est sélectionnée, avec debounce 200 ms.
 - **Bandeau persistant** au défilement : nom de la commune cible + zone active + lien « Changer ↑ ».
 - Avertissement automatique « sélection limitée » si moins de 5 comparables, avec suggestion d'élargir la strate.
-- Avertissement « répartition sectorielle partielle » si l'Insee a masqué trop de cellules au titre du secret statistique.
+- Avertissement « répartition sectorielle partielle » si la ventilation par secteur publiée ne couvre pas l'ensemble des entreprises actives (garde-fou : au millésime 2024, les neuf secteurs sont publiés pour toutes les communes).
 - **Export CSV** (UTF-8 BOM) et impression PDF via le navigateur.
 
 ### Onglet « Plusieurs communes »
@@ -46,9 +46,9 @@ Public cible naturel : développeurs économiques de collectivités, agences de 
 
 Filtres durs sur les comparables (onglet « Une commune ») :
 
-- Plancher de population cible **2 000 habitants**. Sous ce seuil, un ou deux sièges sociaux suffisent à déformer le total des unités légales, et l'Insee masque la majeure partie du profil sectoriel au titre du secret statistique.
+- Plancher de population cible **2 000 habitants**. Sous ce seuil, un ou deux sièges sociaux suffisent à déformer le total des unités légales et le profil sectoriel.
 - Bande de population **[cible / 1,25 ; cible × 1,25]**. Tolérance de ±25 % en échelle multiplicative : une cible de 5 000 habitants cherche entre 4 000 et 6 250 habitants.
-- **Couverture sectorielle ≥ 95 %** sur les candidats. Exclut les communes dont le profil A10 publié est trop lacunaire pour porter une comparaison.
+- **Couverture sectorielle ≥ 95 %** sur les candidats. Au millésime 2024, ce filtre écarte les 59 communes sans unité légale active, dont le profil sectoriel n'est pas défini ; il reste en place au cas où un millésime ultérieur comporterait des cellules occultées.
 - 0 comparable : message d'erreur explicite avec suggestion d'élargissement de la zone.
 - 1 à 4 comparables : analyse affichée avec encadré « sélection limitée », médiane signalée comme indicative.
 
@@ -79,11 +79,11 @@ Puis ouvrir <http://localhost:8000>.
 
 ### Premier lancement
 
-Chemin par défaut : l'app récupère un **artefact pré-bundlé** `data/communes-2024.json` (~12 MB JSON brut, **~2,3 MB sur le wire** après gzip) hébergé sur GitHub Pages, puis l'indexe en IndexedDB. Compter **~3 à 5 s en Wi-Fi**.
+Chemin par défaut : l'app récupère un **artefact pré-bundlé** `data/communes-2024.json` (~13 MB JSON brut, **~2,5 MB sur le wire** après gzip) hébergé sur GitHub Pages, puis l'indexe en IndexedDB. Compter **~3 à 5 s en Wi-Fi**.
 
 Cet artefact est régénéré annuellement par le workflow GitHub Actions `.github/workflows/build-data.yml` (cron 15 novembre, ou déclenchement manuel) qui exécute `scripts/build-data.mjs` — le même pipeline que le téléchargement complet, mais côté CI.
 
-Les sources sont par ailleurs contrôlées chaque lundi par `.github/workflows/datasets-watch.yml`, qui exécute `scripts/check-datasets.mjs` (`npm run check:datasets` en local). La sonde confronte les identifiants épinglés dans `js/insee-api.js` au catalogue Melodi et échoue — donc notifie — si un jeu de données a été renommé ou retiré, si une URL de téléchargement ne répond plus, ou si un millésime plus récent est publié. Elle a été ajoutée après le renommage de `DS_SIDE_STOCKS_UL_COM` en `DS_SIDE_STOCKS_COM` (juillet 2026).
+Les sources sont par ailleurs contrôlées chaque lundi par `.github/workflows/datasets-watch.yml`, qui exécute `scripts/check-datasets.mjs` (`npm run check:datasets` en local). La sonde confronte les identifiants épinglés dans `js/insee-api.js` au catalogue Melodi et échoue — donc notifie — si un jeu de données a été renommé ou retiré, si une URL de téléchargement ne répond plus, ou si un millésime plus récent est publié. Les identifiants Melodi ne sont pas stables dans le temps, d'où ce contrôle hebdomadaire.
 
 Un second script, `scripts/check-millesimes.mjs` (`npm run check:millesimes`), contrôle le contenu plutôt que la disponibilité : il reconstitue depuis le ZIP Insee la série annuelle d'une commune, vérifie que les deux bornes retenues dans l'artefact — année de référence et année cible — correspondent aux valeurs publiées, puis recalcule la croissance sur l'ensemble des communes. Rappel utile : l'application ne conserve que ces deux bornes, les millésimes intermédiaires sont écartés à la lecture.
 
@@ -95,7 +95,7 @@ Chemin de secours : si l'artefact est indisponible (404, première mise en place
 | `DS_SIDE_STOCKS_COM` | ~35 MB | ~451 MB |
 | `DS_SIDE_CREA_ENT_COM` | ~44 MB | ~250 MB |
 
-Extraction streaming via `DecompressionStream('deflate-raw')` natif, filtrage à la volée → seuls ~5 MB persistent en IndexedDB.
+Extraction streaming via `DecompressionStream('deflate-raw')` natif, filtrage à la volée : seules les données retenues (~13 MB) sont conservées en IndexedDB.
 
 Bouton « Rafraîchir les données » dans le header : lance un téléchargement complet depuis l'API Insee, en court-circuitant l'artefact. À utiliser quand l'artefact CI est en retard sur la dernière publication Insee.
 
@@ -103,21 +103,28 @@ Bouton « Rafraîchir les données » dans le header : lance un téléchargement
 
 ## Tests
 
-Deux niveaux :
+Trois niveaux :
 
 ```bash
-# Unitaires offline — ~100 ms, pas de réseau.
+# Unitaires + golden master, hors ligne — moins d'une seconde.
 npm test
+
+# Parcours navigateur — ~20 s, Chrome headless, sans réseau Insee.
+npm run test:browser
 
 # Bout-en-bout réseau — ~35 s, pull complet depuis l'API Insee.
 npm run test:e2e
 ```
 
-Les unitaires (`test/units.mjs`) couvrent les helpers pures : `quantile`, `cosine`, `haversine`, `relDelta`, `summarizeComparables`, `findComparables`, `parseCsvLine`, `headerIndex`, `normalize`, `escapeHtml`, formatteurs fr-FR. 64 cas, runner natif `node --test`, zéro dépendance.
+Les unitaires (`test/units.mjs`) couvrent les helpers pures : `quantile`, `cosine`, `haversine`, `relDelta`, `summarizeComparables`, `findComparables`, `parseCsvLine`, `headerIndex`, `normalize`, `escapeHtml`, formatteurs et libellés fr-FR, contenu des exports CSV, contrôle de l'artefact, et concordance des millésimes cités dans les textes avec ceux du code. Runner natif `node --test`, zéro dépendance.
+
+Le golden master (`test/golden.mjs`) fige les résultats du matching sur l'artefact réel (12 communes × 5 zones : sélection, scores, quartiles, écarts). Un changement de résultat doit être voulu : après vérification, `npm run test:golden:update` recapture la référence. Il échoue aussi, avec un message explicite, quand l'artefact a été régénéré.
+
+Les parcours navigateur (`test/browser.mjs`) pilotent Chrome headless en CDP sur un serveur local, avec un profil jetable : premier chargement, analyse, changement de zone, exports CSV, impression sur une page, onglet « Plusieurs communes », reprise d'un millésime antérieur, échec du téléchargement depuis l'API, artefact d'une autre version, fonctionnement hors ligne. Chrome est recherché aux emplacements usuels ; `CHROME_PATH` permet d'en désigner un autre.
 
 Le harness e2e (`test-pull.mjs`) vérifie l'extraction réelle depuis l'API Insee Melodi, le matching aux quatre modes de zone, l'algorithme `countInRadius`, sur la cible Romans-sur-Isère (26281).
 
-Pré-requis : **Node ≥ 18** (utilise `fetch`, `DecompressionStream` et `TextDecoderStream` natifs).
+Pré-requis : **Node ≥ 18** (utilise `fetch`, `DecompressionStream` et `TextDecoderStream` natifs) ; **Node ≥ 22** et Chrome pour les parcours navigateur.
 
 ---
 
@@ -146,22 +153,32 @@ package.json            "type": "module" (Node ≥ 18 pour les tests)
 test-pull.mjs           harness de test bout-en-bout
 LICENSE                 MIT
 README.md               ce fichier
+CONTRIBUTING.md         conventions de contribution
+SECURITY.md             signalement des vulnérabilités
 data/
-  communes-2024.json    artefact pré-bundlé (~12 MB brut, ~2,3 MB gzip),
+  communes-2024.json    artefact pré-bundlé (~13 MB brut, ~2,5 MB gzip),
                         régénéré annuellement par GH Action
 docs/
   SPEC-V2-historique.md spec implémentée, conservée pour traçabilité
+  SPEC-V3-series-longues.md
+                        spec proposée : séries longues, fenêtre d'observation
 scripts/
   build-data.mjs        exécute pullAll côté Node et écrit data/*.json
   check-datasets.mjs    sonde de disponibilité des sources Insee
   check-millesimes.mjs  confronte les bornes de l'artefact à la source Insee
+  compute-sw-version.mjs
+                        nom du cache du service worker (hash du SHELL), en CI
+  build-og-image.mjs    image d'aperçu social (assets/og-image.*)
 .github/workflows/
   pages.yml             déploiement automatique sur GitHub Pages
   build-data.yml        régénération annuelle de l'artefact (cron)
   datasets-watch.yml    sonde hebdomadaire des sources Insee (cron)
 css/styles.css          mobile-first, sans framework
                         (Fraunces + Geist via Google Fonts)
-assets/icon.svg
+assets/
+  icon.svg
+  og-image.svg, og-image.png
+                        aperçu social (Open Graph)
 js/
   app.js                glue, état, recherche, onglets, scope,
                         tryLoadBundledData (premier chargement rapide)
@@ -179,7 +196,10 @@ js/
   format.js             formattage fr-FR (Intl.NumberFormat)
   util.js               helpers pures partagés (normalize, escapeHtml)
 test/
-  units.mjs             tests unitaires offline (npm test, ~100 ms)
+  units.mjs             tests unitaires offline (npm test)
+  golden.mjs            golden master du matching (npm test)
+  browser.mjs           parcours navigateur (npm run test:browser)
+  fixtures/             références figées (matching, export CSV)
 ```
 
 ---
@@ -203,7 +223,7 @@ du repo sur GitHub Pages, sans build ni dépendance.
 
 - Edge / Chrome desktop, Safari iOS 15.4+, Chrome Android, Firefox 113+.
 - IndexedDB requis (universel).
-- `DecompressionStream('deflate-raw')` requis (Chrome 80+, Edge 80+, Firefox 113+, Safari 16.4+).
+- `DecompressionStream('deflate-raw')` requis pour le seul téléchargement complet depuis l'API Insee (Chrome 80+, Edge 80+, Firefox 113+, Safari 16.4+) ; le chargement ordinaire, par l'artefact pré-bundlé, n'en dépend pas.
 - Service worker non bloquant : l'app fonctionne sans (mode offline simplement désactivé).
 
 ---
@@ -227,12 +247,12 @@ Non couverts par l'audit automatique : tests utilisateurs NVDA / VoiceOver, navi
 ## Limitations méthodologiques
 
 - Une commune correspond à son **territoire administratif**, pas à un bassin de vie ou une aire d'attraction (notions Insee plus larges qui regroupent plusieurs communes liées par l'emploi et les déplacements).
-- Population « 2023 » = millésime légal au 1<sup>er</sup> janvier 2026, construit à partir des enquêtes du recensement 2018-2022.
+- Population « 2023 » = population légale en vigueur au 1<sup>er</sup> janvier 2026, établie à partir des cinq enquêtes annuelles de recensement les plus récentes et rapportée au 1<sup>er</sup> janvier 2023.
 - Les unités légales sont rattachées à leur commune d'**implantation administrative** (siège social), pas à leur lieu d'activité opérationnelle. Effet « Paris / La Défense » : les communes-sièges sur-représentées vs les communes résidentielles sous-représentées.
-- Créations 2024 incluent les **micro-entrepreneurs**.
+- Créations 2025 incluent les **micro-entrepreneurs**.
 - Croissance 2014→2024 traverse plusieurs évolutions méthodologiques Insee (refonte du répertoire des entreprises, généralisation du statut de micro-entrepreneur). Comparabilité dans le temps affectée.
 - **Pas d'effectifs salariés à la maille communale** (non publiés par l'Insee).
-- Profil sectoriel volontairement large (9 secteurs A10, agriculture exclue à la maille communale par l'Insee). Sur les petites communes, certaines cellules sectorielles sont occultées au titre du secret statistique.
+- Profil sectoriel volontairement large (9 secteurs A10, agriculture exclue à la maille communale par l'Insee). Les neuf secteurs sont publiés pour l'ensemble des communes ; la nomenclature plus fine (A21) n'est pas diffusée à cette échelle.
 - Arrondissements municipaux de Paris / Lyon / Marseille traités séparément (codes Insee dédiés, niveau ARM).
 
 ---
