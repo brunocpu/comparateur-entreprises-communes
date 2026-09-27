@@ -19,10 +19,10 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSy
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DATA_VERSION } from '../js/insee-api.js';
+import { DATA_VERSION, ARTEFACT_PATH } from '../js/insee-api.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const ARTEFACT_URL_PATH = '/data/communes-2024.json';
+const ARTEFACT_URL_PATH = `/${ARTEFACT_PATH}`;
 const CSV_FIXTURE = new URL('./fixtures/export-26281-national.csv', import.meta.url);
 const UPDATE = process.env.UPDATE_FIXTURES === '1';
 
@@ -381,7 +381,7 @@ describe('parcours navigateur', { skip: !CHROME && 'Chrome introuvable — défi
     }
   });
 
-  test('S11 artefact d\'une autre version que le code : refusé', { todo: 'étape 5' }, async () => {
+  test('S11 artefact d\'une autre version que le code : refusé', async () => {
     const artefact = JSON.parse(readFileSync(path.join(ROOT, ARTEFACT_URL_PATH), 'utf8'));
     server.artefactOverride = JSON.stringify({ ...artefact, dataVersion: 'autre-version' });
     await cdp.send('Network.setBypassServiceWorker', { bypass: true });

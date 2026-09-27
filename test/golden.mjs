@@ -12,8 +12,9 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { findComparables, summarizeComparables } from '../js/matching.js';
+import { ARTEFACT_PATH } from '../js/insee-api.js';
 
-const ARTEFACT = new URL('../data/communes-2024.json', import.meta.url);
+const ARTEFACT = new URL(`../${ARTEFACT_PATH}`, import.meta.url);
 const FIXTURE = new URL('./fixtures/golden-matching.json', import.meta.url);
 
 // Panel choisi pour couvrir les cas de figure du matching.

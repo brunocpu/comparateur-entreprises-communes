@@ -70,6 +70,22 @@ const POP_YEAR = '2023';
 // visiteur déjà venu garde ses anciens chiffres sous les nouveaux libellés.
 export const DATA_VERSION = `${POP_YEAR}-${STOCK_BASELINE_YEAR}-${STOCK_YEAR}-${CREA_YEAR}`;
 
+// Artefact pré-bundlé : chemin relatif à la racine du site et du dépôt,
+// partagé par l'app, le script de build et les contrôles.
+export const ARTEFACT_PATH = 'data/communes-2024.json';
+
+// Contrôle d'un artefact avant indexation : renvoie null s'il est utilisable,
+// sinon le motif du refus. Un artefact d'une autre version que le code
+// (build en retard, cache intermédiaire) serait sinon enregistré sous la
+// version du code et ne serait plus jamais remplacé.
+export function checkArtefact(data) {
+  if (!data || !Array.isArray(data.records) || !data.records.length) return 'Artefact invalide ou vide';
+  if (data.dataVersion !== DATA_VERSION) {
+    return `Artefact de version ${data.dataVersion}, version attendue ${DATA_VERSION}`;
+  }
+  return null;
+}
+
 // Année d'observation retenue dans chaque jeu de données. Exporté pour que
 // `scripts/check-datasets.mjs` puisse la confronter à la dernière année
 // réellement publiée : l'identifiant du produit ne suffit pas à la détecter,

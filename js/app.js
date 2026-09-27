@@ -1,5 +1,5 @@
 import * as cache from './cache.js';
-import { pullAll, DATA_VERSION } from './insee-api.js';
+import { pullAll, DATA_VERSION, ARTEFACT_PATH, checkArtefact } from './insee-api.js';
 import { findComparables, summarizeComparables, countInRadius } from './matching.js';
 import * as ui from './ui.js';
 import { exportCsv, exportMultiCsv } from './export.js';
@@ -69,7 +69,7 @@ async function tryLoadBundledData() {
 
   try {
     ui.setProgress(0.3, 'Téléchargement des données…');
-    const res = await fetch('./data/communes-2024.json');
+    const res = await fetch(`./${ARTEFACT_PATH}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     // res.json() laisse le moteur streamer en interne — empreinte mémoire
@@ -78,7 +78,8 @@ async function tryLoadBundledData() {
     // Acceptable : artefact de ~2,3 MB gzip, quelques secondes en Wi-Fi.
     ui.setProgress(0.6, 'Décodage…');
     const data = await res.json();
-    if (!data || !Array.isArray(data.records)) throw new Error('Artefact invalide');
+    const problem = checkArtefact(data);
+    if (problem) throw new Error(problem);
 
     ui.setProgress(0.95, 'Indexation locale…');
     // Purge avant écriture : on remplace un millésime par un autre, et

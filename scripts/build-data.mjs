@@ -7,7 +7,7 @@
 
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
-import { pullAll, STOCK_YEAR, DATA_VERSION } from '../js/insee-api.js';
+import { pullAll, STOCK_YEAR, DATA_VERSION, ARTEFACT_PATH } from '../js/insee-api.js';
 
 const t0 = Date.now();
 let lastLog = 0;
@@ -35,7 +35,7 @@ try {
     records
   };
   const json = JSON.stringify(out);
-  const path = 'data/communes-2024.json';
+  const path = ARTEFACT_PATH;
   writeFileSync(path, json);
 
   const rawMb = (json.length / 1024 / 1024).toFixed(2);
