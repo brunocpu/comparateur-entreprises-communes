@@ -3,7 +3,10 @@ name: Refresh bundled data
 # Régénère data/communes-2024.json depuis l'API Insee Melodi.
 # - Cron annuel autour de la publication Insee Side (novembre).
 # - Manual trigger via l'onglet Actions (workflow_dispatch).
-# Si le contenu a changé : commit + push, ce qui déclenche le workflow Pages.
+# Si le contenu a changé : commit + push. Le déploiement suit via pages.yml
+# (déclencheur workflow_run) : un push fait avec le GITHUB_TOKEN ne déclenche
+# pas à lui seul d'autre workflow. Contenu inchangé : le build conserve la date
+# précédente, le fichier reste identique et rien n'est commité.
 on:
   workflow_dispatch:
   schedule:

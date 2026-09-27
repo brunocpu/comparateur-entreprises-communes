@@ -11,14 +11,19 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   quantile, median, cosine, haversine, relDelta,
   summarizeComparables, countInRadius, findComparables
 } from '../js/matching.js';
 import { parseCsvLine, headerIndex } from '../js/zip-csv.js';
-import { fmtInt, fmtDec1, fmtPct, fmtPctSigned } from '../js/format.js';
+import { fmtInt, fmtDec1, fmtPct } from '../js/format.js';
 import { normalize, escapeHtml } from '../js/util.js';
+// Import en espace de noms : une fonction absente fait échouer son test, pas le fichier.
+import * as csv from '../js/export.js';
+import * as fmt from '../js/format.js';
+import * as api from '../js/insee-api.js';
 
 // ---------- quantile (R type-7 linear interpolation) ----------
 
@@ -120,8 +125,6 @@ describe('format', () => {
   test('fmtInt Infinity → tiret', () => assert.equal(fmtInt(Infinity), '—'));
   test('fmtDec1 garde une décimale', () => assert.match(fmtDec1(3.14), /^3,1$/));
   test('fmtPct convertit ratio en %', () => assert.match(fmtPct(0.42), /42.%$/));
-  test('fmtPctSigned positif explicite le +', () => assert.ok(fmtPctSigned(0.5).includes('+')));
-  test('fmtPctSigned null → tiret', () => assert.equal(fmtPctSigned(null), '—'));
 });
 
 // ---------- normalize ----------
@@ -272,4 +275,182 @@ describe('countInRadius', () => {
   test('monotone : rayon plus large ≥ rayon plus étroit', () => {
     assert.ok(countInRadius(target, all, 1000) >= countInRadius(target, all, 50));
   });
+});
+
+// ---------- export CSV ----------
+
+describe('export CSV', () => {
+  const artefact = JSON.parse(readFileSync(new URL(`../${api.ARTEFACT_PATH}`, import.meta.url), 'utf8'));
+  const byCode = new Map(artefact.records.map(r => [r.code, r]));
+  const romans = byCode.get('26281');
+  const valence = byCode.get('26362');
+  const today = '01/01/2026';
+
+  test('« Une commune » : contenu identique à l\'export de référence', () => {
+    const { candidates } = findComparables(romans, artefact.records, { scope: { kind: 'national' } });
+    const summary = summarizeComparables(romans, candidates);
+    const lines = csv.buildComparablesCsv(romans, candidates, summary, { kind: 'national' }, { today })
+      .split('\r\n').filter(l => !l.startsWith('# Export :'));
+    // Fins de ligne indifférentes : Git peut extraire la référence en CRLF.
+    const expected = readFileSync(new URL('./fixtures/export-26281-national.csv', import.meta.url), 'utf8')
+      .replace(/\r?\n$/, '').split(/\r?\n/);
+    assert.deepEqual(lines, expected);
+  });
+
+  test('« Plusieurs communes » : une ligne par commune, dans l\'ordre choisi', () => {
+    const lines = csv.buildMultiCsv([valence, romans], { today }).split('\r\n');
+    const rows = lines.filter(l => l.startsWith('Commune;'));
+    assert.deepEqual(rows.map(r => r.split(';')[2]), ['26362', '26281']);
+  });
+
+  test('« Plusieurs communes » : même en-tête de colonnes que « Une commune »', () => {
+    const header = l => l.find(x => x.startsWith('Type;'));
+    const multi = csv.buildMultiCsv([valence, romans], { today }).split('\r\n');
+    const single = readFileSync(new URL('./fixtures/export-26281-national.csv', import.meta.url), 'utf8').split(/\r?\n/);
+    assert.equal(header(multi), header(single));
+  });
+
+  test('« Plusieurs communes » : métadonnées de source et de date, pas de quartiles', () => {
+    const content = csv.buildMultiCsv([valence, romans], { today });
+    assert.match(content, /^# Sources : Insee Side/m);
+    assert.match(content, /^# Export : 01\/01\/2026$/m);
+    assert.match(content, /^# Communes : 2$/m);
+    assert.doesNotMatch(content, /Quart|Médiane/);
+  });
+
+  test('nom de commune contenant un séparateur : champ entre guillemets', () => {
+    const content = csv.buildMultiCsv([{ ...romans, name: 'A;B' }, valence], { today });
+    assert.match(content, /^Commune;"A;B";26281;/m);
+  });
+
+  test('nom du fichier « Plusieurs communes »', () => {
+    assert.equal(csv.multiCsvFilename([valence, romans]), 'comparateur-selection-26362-26281.csv');
+  });
+});
+
+// ---------- écarts à la médiane (libellés des indicateurs) ----------
+
+describe('écarts à la médiane', () => {
+  test('écart relatif : un seul signe %', () => {
+    assert.match(fmt.fmtDeltaVsMedian(-0.134), /^[-−]13,4\s%\spar rapport à la médiane des comparables$/);
+    assert.doesNotMatch(fmt.fmtDeltaVsMedian(0.05), /%\s*%/);
+  });
+  test('écart relatif positif signé', () => assert.match(fmt.fmtDeltaVsMedian(0.05), /^\+5\s%/));
+  test('croissance : écart en points, sans %', () => {
+    assert.match(fmt.fmtPointsVsMedian(-0.019), /^[-−]1,9 point d'écart avec la médiane$/);
+    assert.doesNotMatch(fmt.fmtPointsVsMedian(-0.019), /%/);
+  });
+  test('croissance : « points » au pluriel à partir de 2', () => {
+    assert.match(fmt.fmtPointsVsMedian(0.025), /^\+2,5 points d'écart/);
+    assert.match(fmt.fmtPointsVsMedian(0.0196), /^\+2 points d'écart/);
+  });
+  test('croissance : écart nul', () => assert.equal(fmt.fmtPointsVsMedian(0), '0 point d\'écart avec la médiane'));
+  test('valeur absente → chaîne vide', () => {
+    assert.equal(fmt.fmtDeltaVsMedian(null), '');
+    assert.equal(fmt.fmtPointsVsMedian(undefined), '');
+  });
+});
+
+// ---------- libellés : zone de comparaison, nombre de comparables ----------
+
+describe('libellés', () => {
+  const regions = new Map([['84', { code: '84', nom: 'Auvergne-Rhône-Alpes' }]]);
+  const depts = new Map([['26', { code: '26', nom: 'Drôme' }]]);
+
+  test('zone nationale', () => assert.equal(fmt.scopeLabel({ kind: 'national' }, regions, depts), 'Toute la France'));
+  test('zone absente → nationale', () => assert.equal(fmt.scopeLabel(null), 'Toute la France'));
+  test('région nommée', () => assert.equal(fmt.scopeLabel({ kind: 'region', value: '84' }, regions, depts), 'Région Auvergne-Rhône-Alpes'));
+  test('département nommé', () => assert.equal(fmt.scopeLabel({ kind: 'departement', value: '26' }, regions, depts), 'Département Drôme (26)'));
+  test('référentiels absents : repli sur le code', () => {
+    assert.equal(fmt.scopeLabel({ kind: 'region', value: '84' }), 'Région 84');
+    assert.equal(fmt.scopeLabel({ kind: 'departement', value: '26' }), 'Département 26');
+  });
+  test('rayon', () => assert.equal(fmt.scopeLabel({ kind: 'distance', value: 50 }), 'Rayon 50 km'));
+
+  test('une commune comparable : singulier', () => assert.equal(fmt.fmtCommunesComparables(1), '1 commune comparable'));
+  test('dix communes comparables : pluriel', () => assert.equal(fmt.fmtCommunesComparables(10), '10 communes comparables'));
+
+  test('export CSV : zone désignée comme à l\'écran', () => {
+    const artefact = JSON.parse(readFileSync(new URL(`../${api.ARTEFACT_PATH}`, import.meta.url), 'utf8'));
+    const romans = artefact.records.find(r => r.code === '26281');
+    const scope = { kind: 'departement', value: '26' };
+    const { candidates } = findComparables(romans, artefact.records, { scope });
+    const content = csv.buildComparablesCsv(romans, candidates, summarizeComparables(romans, candidates), scope,
+      { today: '01/01/2026', regionsByCode: regions, deptsByCode: depts });
+    assert.match(content, /^# Zone de comparaison : Département Drôme \(26\)$/m);
+  });
+});
+
+// ---------- artefact pré-bundlé ----------
+
+describe('artefact pré-bundlé', () => {
+  const read = () => JSON.parse(readFileSync(new URL(`../${api.ARTEFACT_PATH}`, import.meta.url), 'utf8'));
+
+  test('l\'artefact du dépôt porte la version de données du code', () => {
+    assert.equal(api.checkArtefact(read()), null);
+  });
+  test('version différente de celle du code : refusé', () => {
+    const problem = api.checkArtefact({ ...read(), dataVersion: 'autre-version' });
+    assert.match(problem, /autre-version/);
+    assert.match(problem, new RegExp(api.DATA_VERSION));
+  });
+  test('sans communes : refusé', () => {
+    assert.ok(api.checkArtefact({ dataVersion: api.DATA_VERSION, records: [] }));
+  });
+  test('contenu illisible : refusé', () => {
+    assert.ok(api.checkArtefact(null));
+    assert.ok(api.checkArtefact({ dataVersion: api.DATA_VERSION }));
+  });
+});
+
+describe('artefact : comparaison de contenu (build annuel)', () => {
+  const a = { builtAt: '2026-09-06T17:23:12.701Z', dataVersion: 'v', records: [{ code: '1', stock: 3 }] };
+
+  test('seule la date de build diffère : contenu identique', () => {
+    assert.equal(api.sameArtefactContent(a, { ...a, builtAt: '2026-11-15T04:00:00.000Z' }), true);
+  });
+  test('une valeur diffère : contenu différent', () => {
+    assert.equal(api.sameArtefactContent(a, { ...a, records: [{ code: '1', stock: 4 }] }), false);
+  });
+  test('version différente : contenu différent', () => {
+    assert.equal(api.sameArtefactContent(a, { ...a, dataVersion: 'w' }), false);
+  });
+  test('pas d\'artefact précédent : contenu différent', () => {
+    assert.equal(api.sameArtefactContent(null, a), false);
+  });
+});
+
+// ---------- cohérence des textes avec les millésimes du code ----------
+
+describe('textes : millésimes conformes aux constantes', () => {
+  const { STOCK_BASELINE_YEAR, STOCK_YEAR, OBSERVATION_YEARS } = api;
+  const files = ['index.html', 'README.md', 'js/ui.js', 'js/export.js'];
+  const read = f => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+
+  for (const f of files) {
+    test(`${f} : croissance ${STOCK_BASELINE_YEAR}→${STOCK_YEAR}`, () => {
+      const found = [...read(f).matchAll(/[Cc]roissance (\d{4}) ?→ ?(\d{4})/g)].map(m => `${m[1]}→${m[2]}`);
+      assert.deepEqual(found.filter(x => x !== `${STOCK_BASELINE_YEAR}→${STOCK_YEAR}`), []);
+    });
+    test(`${f} : créations ${OBSERVATION_YEARS.creations}`, () => {
+      const found = [...read(f).matchAll(/[Cc]réations (?:d'entreprises )?(\d{4})/g)].map(m => m[1]);
+      assert.deepEqual(found.filter(y => y !== OBSERVATION_YEARS.creations), []);
+    });
+  }
+
+  test('index.html : millésimes du pied de page', () => {
+    const { populations, stocks, creations } = OBSERVATION_YEARS;
+    assert.match(read('index.html'), new RegExp(`population ${populations}, entreprises ${stocks}, créations ${creations}`));
+  });
+});
+
+describe('textes : terminologie Insee', () => {
+  const files = ['index.html', 'README.md', 'js/app.js', 'js/ui.js', 'js/export.js'];
+  for (const f of files) {
+    test(`${f} : « populations de référence », pas « populations légales »`, () => {
+      const content = readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+      const found = [...content.matchAll(/populations?\s+légales?|millésime\s+légal/gi)].map(m => m[0]);
+      assert.deepEqual(found, []);
+    });
+  }
 });

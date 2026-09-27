@@ -37,6 +37,9 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   // Only handle same-origin GETs for the app shell
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  // L'artefact de données est indexé en IndexedDB par l'app : le garder aussi
+  // ici doublerait son empreinte (~13 Mo) sans rien apporter au hors-ligne.
+  if (url.pathname.includes('/data/')) return;
 
   e.respondWith(
     caches.match(e.request).then(cached => {

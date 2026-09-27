@@ -1,8 +1,8 @@
 import * as cache from './cache.js';
-import { pullAll, DATA_VERSION } from './insee-api.js';
-import { findComparables, summarizeComparables, countInRadius } from './matching.js';
+import { pullAll, DATA_VERSION, ARTEFACT_PATH, checkArtefact } from './insee-api.js';
+import { findComparables, summarizeComparables, countInRadius, POP_FLOOR_FOR_MATCHING } from './matching.js';
 import * as ui from './ui.js';
-import { exportCsv } from './export.js';
+import { exportCsv, exportMultiCsv } from './export.js';
 import { fmtDate } from './format.js';
 import { normalize } from './util.js';
 
@@ -69,16 +69,17 @@ async function tryLoadBundledData() {
 
   try {
     ui.setProgress(0.3, 'Téléchargement des données…');
-    const res = await fetch('./data/communes-2024.json');
+    const res = await fetch(`./${ARTEFACT_PATH}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     // res.json() laisse le moteur streamer en interne — empreinte mémoire
     // ~3× plus faible qu'une accumulation de chunks → Blob → text → JSON.parse,
     // au prix d'une barre de progression non granulaire pendant le download.
-    // Acceptable : artefact de ~2,3 MB gzip, quelques secondes en Wi-Fi.
+    // Acceptable : artefact de ~2,5 MB gzip, quelques secondes en Wi-Fi.
     ui.setProgress(0.6, 'Décodage…');
     const data = await res.json();
-    if (!data || !Array.isArray(data.records)) throw new Error('Artefact invalide');
+    const problem = checkArtefact(data);
+    if (problem) throw new Error(problem);
 
     ui.setProgress(0.95, 'Indexation locale…');
     // Purge avant écriture : on remplace un millésime par un autre, et
@@ -89,7 +90,6 @@ async function tryLoadBundledData() {
     await cache.bulkPut(data.records);
     await cache.setMeta('dataVersion', DATA_VERSION);
     await cache.setMeta('lastPullAt', data.builtAt ? Date.parse(data.builtAt) : Date.now());
-    await cache.setMeta('lastPullWarnings', data.warnings || []);
     await cache.setMeta('regions', data.regions || []);
     await cache.setMeta('departements', data.departements || []);
     ui.setProgress(1, `Terminé — ${data.records.length.toLocaleString('fr-FR')} communes chargées`);
@@ -150,25 +150,19 @@ async function doPull(refresh) {
   btnPull.disabled = true;
   btnRefresh.disabled = true;
 
-  const ctrl = new AbortController();
   try {
-    const { records, warnings, regions, departements } = await pullAll(({ ratio, label }) => ui.setProgress(ratio, label), ctrl.signal);
+    const { records, regions, departements } = await pullAll(({ ratio, label }) => ui.setProgress(ratio, label));
     if (!records.length) throw new Error('Aucune donnée téléchargée — vérifier la connexion ou l\'API Insee.');
-    // Purge après le pull, jamais avant : un échec réseau laissait jusqu'ici
-    // le visiteur sans données jusqu'au rechargement de la page.
+    // Purge après le pull, jamais avant : en cas d'échec réseau, les données
+    // en cache restent disponibles.
     await cache.clearAll();
     await cache.bulkPut(records);
     await cache.setMeta('dataVersion', DATA_VERSION);
     await cache.setMeta('lastPullAt', Date.now());
-    await cache.setMeta('lastPullWarnings', warnings);
     await cache.setMeta('regions', regions);
     await cache.setMeta('departements', departements);
     await loadFromCache();
-    const tail = warnings.length
-      ? ` — ${warnings.length} avertissement(s) (API Insee partielle, voir console).`
-      : '';
-    ui.setProgress(1, `Terminé — ${records.length.toLocaleString('fr-FR')} communes chargées${tail}`);
-    if (warnings.length) console.warn('Pull warnings:', warnings);
+    ui.setProgress(1, `Terminé — ${records.length.toLocaleString('fr-FR')} communes chargées`);
     showSearch();
   } catch (err) {
     console.error(err);
@@ -201,7 +195,7 @@ async function loadFromCache() {
 
   // Migration : pull réalisé avant la v2 du sélecteur de scope → les listes
   // régions/départements n'étaient pas en cache. On les récupère à la volée
-  // (~5 KB, ~200 ms) pour éviter à l'utilisateur de re-pull les 67 MB.
+  // (~5 KB, ~200 ms) pour éviter à l'utilisateur de re-pull les ~80 MB.
   if (!state.regions.length || !state.departements.length) {
     try {
       const [regions, departements] = await Promise.all([
@@ -465,8 +459,8 @@ function runAnalysis(target) {
   if (result.reason === 'pop_floor') {
     ui.showError(
       `${target.name} compte ${target.population.toLocaleString('fr-FR')} habitants. ` +
-      `En dessous de 2 000 habitants, 1 ou 2 sièges sociaux suffisent à déformer le total des entreprises actives, ` +
-      `et l'Insee masque la plupart des chiffres détaillés pour préserver l'anonymat.`,
+      `En dessous de ${POP_FLOOR_FOR_MATCHING.toLocaleString('fr-FR')} habitants, un ou deux sièges sociaux suffisent ` +
+      `à déformer le total des entreprises actives et leur répartition par secteur.`,
       'Comparaison indisponible — commune trop petite'
     );
     document.getElementById('results').hidden = true;
@@ -499,7 +493,6 @@ function runAnalysis(target) {
   ui.renderScopeBadge(result.scope, target, comparables.length, state.regionsByCode, state.departementsByCode);
   ui.updateStickyBanner(target, result.scope, state.regionsByCode, state.departementsByCode);
   ui.showSearchSummary(target, result.scope, state.regionsByCode, state.departementsByCode);
-  ui.setStaleResults(false);
 
   const resultsEl = document.getElementById('results');
   const wasHidden = resultsEl.hidden;
@@ -519,6 +512,11 @@ function wireExport() {
   document.getElementById('btn-export').addEventListener('click', () => {
     if (!state.selected || !state.comparables) return;
     const scope = ui.readScopeFromUI();
-    exportCsv(state.selected, state.comparables, state.summary, scope);
+    exportCsv(state.selected, state.comparables, state.summary, scope,
+      { regionsByCode: state.regionsByCode, deptsByCode: state.departementsByCode });
+  });
+  document.getElementById('btn-multi-export').addEventListener('click', () => {
+    if (state.customCommunes.length < 2) return;
+    exportMultiCsv(state.customCommunes);
   });
 }

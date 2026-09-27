@@ -6,7 +6,7 @@
 > de référence est le `README.md` à la racine.
 
 **Statut** : implémentée, conservée pour historique.
-**Auteur** : équipe POC, après revues croisées (statisticien Insee, UX designer, directeur artistique).
+**Auteur** : équipe POC, après revues croisées (statistique, UX, direction artistique).
 **Périmètre** : sélecteur de scope, mécanique d'auto-recompute, traitement visuel cards et header.
 
 ---
