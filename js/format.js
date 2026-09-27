@@ -8,7 +8,6 @@ const pf1 = new Intl.NumberFormat('fr-FR', {
 
 export const fmtInt = v => v == null || !Number.isFinite(v) ? '—' : nf0.format(v);
 export const fmtDec1 = v => v == null || !Number.isFinite(v) ? '—' : nf1.format(v);
-export const fmtPctSigned = v => v == null || !Number.isFinite(v) ? '—' : pf1.format(v);
 export const fmtPct = v => {
   if (v == null || !Number.isFinite(v)) return '—';
   return new Intl.NumberFormat('fr-FR', {
