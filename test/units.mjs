@@ -11,6 +11,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   quantile, median, cosine, haversine, relDelta,
@@ -19,6 +20,8 @@ import {
 import { parseCsvLine, headerIndex } from '../js/zip-csv.js';
 import { fmtInt, fmtDec1, fmtPct, fmtPctSigned } from '../js/format.js';
 import { normalize, escapeHtml } from '../js/util.js';
+// Import en espace de noms : une fonction absente fait échouer son test, pas le fichier.
+import * as csv from '../js/export.js';
 
 // ---------- quantile (R type-7 linear interpolation) ----------
 
@@ -271,5 +274,55 @@ describe('countInRadius', () => {
   });
   test('monotone : rayon plus large ≥ rayon plus étroit', () => {
     assert.ok(countInRadius(target, all, 1000) >= countInRadius(target, all, 50));
+  });
+});
+
+// ---------- export CSV ----------
+
+describe('export CSV', () => {
+  const artefact = JSON.parse(readFileSync(new URL('../data/communes-2024.json', import.meta.url), 'utf8'));
+  const byCode = new Map(artefact.records.map(r => [r.code, r]));
+  const romans = byCode.get('26281');
+  const valence = byCode.get('26362');
+  const today = '01/01/2026';
+
+  test('« Une commune » : contenu identique à l\'export de référence', () => {
+    const { candidates } = findComparables(romans, artefact.records, { scope: { kind: 'national' } });
+    const summary = summarizeComparables(romans, candidates);
+    const lines = csv.buildComparablesCsv(romans, candidates, summary, { kind: 'national' }, { today })
+      .split('\r\n').filter(l => !l.startsWith('# Export :'));
+    const expected = readFileSync(new URL('./fixtures/export-26281-national.csv', import.meta.url), 'utf8')
+      .replace(/\n$/, '').split('\n');
+    assert.deepEqual(lines, expected);
+  });
+
+  test('« Plusieurs communes » : une ligne par commune, dans l\'ordre choisi', () => {
+    const lines = csv.buildMultiCsv([valence, romans], { today }).split('\r\n');
+    const rows = lines.filter(l => l.startsWith('Commune;'));
+    assert.deepEqual(rows.map(r => r.split(';')[2]), ['26362', '26281']);
+  });
+
+  test('« Plusieurs communes » : même en-tête de colonnes que « Une commune »', () => {
+    const header = l => l.find(x => x.startsWith('Type;'));
+    const multi = csv.buildMultiCsv([valence, romans], { today }).split('\r\n');
+    const single = readFileSync(new URL('./fixtures/export-26281-national.csv', import.meta.url), 'utf8').split('\n');
+    assert.equal(header(multi), header(single));
+  });
+
+  test('« Plusieurs communes » : métadonnées de source et de date, pas de quartiles', () => {
+    const content = csv.buildMultiCsv([valence, romans], { today });
+    assert.match(content, /^# Sources : Insee Side/m);
+    assert.match(content, /^# Export : 01\/01\/2026$/m);
+    assert.match(content, /^# Communes : 2$/m);
+    assert.doesNotMatch(content, /Quart|Médiane/);
+  });
+
+  test('nom de commune contenant un séparateur : champ entre guillemets', () => {
+    const content = csv.buildMultiCsv([{ ...romans, name: 'A;B' }, valence], { today });
+    assert.match(content, /^Commune;"A;B";26281;/m);
+  });
+
+  test('nom du fichier « Plusieurs communes »', () => {
+    assert.equal(csv.multiCsvFilename([valence, romans]), 'comparateur-selection-26362-26281.csv');
   });
 });
