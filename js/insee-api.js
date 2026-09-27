@@ -86,6 +86,16 @@ export function checkArtefact(data) {
   return null;
 }
 
+// Deux artefacts ne différant que par leur date de build ont le même contenu.
+// Utilisé par `scripts/build-data.mjs` pour conserver la date précédente :
+// le fichier reste alors identique octet pour octet et le build annuel ne
+// produit pas de commit lorsque l'Insee n'a rien changé.
+export function sameArtefactContent(a, b) {
+  if (!a || !b) return false;
+  const withoutDate = ({ builtAt, ...rest }) => rest;
+  return JSON.stringify(withoutDate(a)) === JSON.stringify(withoutDate(b));
+}
+
 // Année d'observation retenue dans chaque jeu de données. Exporté pour que
 // `scripts/check-datasets.mjs` puisse la confronter à la dernière année
 // réellement publiée : l'identifiant du produit ne suffit pas à la détecter,
